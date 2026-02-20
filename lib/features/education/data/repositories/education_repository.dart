@@ -151,14 +151,27 @@ class EducationRepository {
   }
 
   /// Upserts progress ONLY if remote is newer (Last-Write-Wins).
+  /// Skips incomplete documents that are missing required fields.
   Future<bool> upsertProgressIfNewer(Map<String, dynamic> remoteData) async {
-    final String remoteId = remoteData['id'] as String;
-    final String userId = remoteData['userId'] as String;
-    final String lessonId = remoteData['lessonId'] as String;
-    final int remotePercent = remoteData['progressPercent'] as int;
-    final DateTime remoteUpdatedAt = DateTime.parse(
-      remoteData['updatedAt'] as String,
-    );
+    final String? remoteId = remoteData['id'] as String?;
+    final String? userId = remoteData['userId'] as String?;
+    final String? lessonId = remoteData['lessonId'] as String?;
+    final int? remotePercent = remoteData['progressPercent'] as int?;
+    final String? updatedAtRaw = remoteData['updatedAt'] as String?;
+
+    if (remoteId == null ||
+        userId == null ||
+        lessonId == null ||
+        remotePercent == null ||
+        updatedAtRaw == null) {
+      log.w(
+        'LWW: Skipping incomplete remote document (id=$remoteId)',
+        tag: LogTags.sync,
+      );
+      return false;
+    }
+
+    final DateTime remoteUpdatedAt = DateTime.parse(updatedAtRaw);
 
     final Progress? local = await _db.getProgressByUserAndLesson(
       userId,

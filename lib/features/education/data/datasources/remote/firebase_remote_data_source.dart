@@ -26,10 +26,7 @@ class FirebaseRemoteDataSource {
     final String docId = payload['id'] as String;
     try {
       await _progressRef.doc(docId).set(payload, SetOptions(merge: true));
-      log.i(
-        'Firestore: Uploaded progress doc=$docId',
-        tag: LogTags.network,
-      );
+      log.i('Firestore: Uploaded progress doc=$docId', tag: LogTags.network);
     } on FirebaseException catch (e) {
       log.e(
         'Firestore: Upload failed for doc=$docId',
@@ -45,12 +42,17 @@ class FirebaseRemoteDataSource {
   /// Fetches every document in the `progresses` collection for sync-down.
   Future<List<Map<String, dynamic>>> fetchAllProgress() async {
     try {
-      final QuerySnapshot<Map<String, dynamic>> snapshot =
-          await _progressRef.get();
+      final QuerySnapshot<Map<String, dynamic>> snapshot = await _progressRef
+          .get();
 
-      final List<Map<String, dynamic>> results = snapshot.docs
-          .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) => doc.data())
-          .toList();
+      final List<Map<String, dynamic>> results = snapshot.docs.map((
+        QueryDocumentSnapshot<Map<String, dynamic>> doc,
+      ) {
+        final Map<String, dynamic> data = doc.data();
+        // Ensure the document ID is always present in the map.
+        data['id'] = doc.id;
+        return data;
+      }).toList();
 
       log.i(
         'Firestore: Fetched ${results.length} progress documents',
@@ -81,10 +83,9 @@ class FirebaseRemoteDataSource {
     };
 
     try {
-      await _progressRef.doc(progressId).set(
-            conflictPayload,
-            SetOptions(merge: true),
-          );
+      await _progressRef
+          .doc(progressId)
+          .set(conflictPayload, SetOptions(merge: true));
       log.i(
         'Firestore: Seeded conflict on doc=$progressId '
         '(progress=100%, updatedAt=${futureTimestamp.toIso8601String()})',
