@@ -269,14 +269,15 @@ class _LessonCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: <Widget>[
                 FilledButton.icon(
                   onPressed: progressPercent >= 100 ? null : onUpdateOffline,
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Update Progress Offline'),
                 ),
-                const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: onSimulateConflict,
                   child: const Text('Simulate Remote Conflict'),
