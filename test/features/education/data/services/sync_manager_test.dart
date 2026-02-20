@@ -231,15 +231,55 @@ void main() {
     });
   });
 
-  group('simulateRemoteConflict', () {
-    test('delegates to SyncRepository', () async {
+  group('queueConflictSimulation', () {
+    test(
+      'queued conflict executes during performFullSync between upload and download',
+      () async {
+        syncManager.currentConnectivityForTest = ConnectivityState.online;
+
+        // Queue a conflict simulation while "offline" (no sync yet)
+        syncManager.queueConflictSimulation('p1');
+
+        // Stub upload queue (empty)
+        when(
+          () => mockEducationRepo.getPendingSyncItems(),
+        ).thenAnswer((_) async => <SyncQueueItem>[]);
+
+        // Stub conflict simulation
+        when(
+          () => mockSyncRepo.simulateRemoteConflict('p1'),
+        ).thenAnswer((_) async {});
+
+        // Stub downloads
+        stubEmptyDownloads();
+
+        await syncManager.performFullSync();
+
+        // Conflict simulation was executed during sync
+        verify(() => mockSyncRepo.simulateRemoteConflict('p1')).called(1);
+      },
+    );
+
+    test('conflict queue is cleared after sync', () async {
+      syncManager.currentConnectivityForTest = ConnectivityState.online;
+
+      syncManager.queueConflictSimulation('p1');
+
       when(
-        () => mockSyncRepo.simulateRemoteConflict(any()),
+        () => mockEducationRepo.getPendingSyncItems(),
+      ).thenAnswer((_) async => <SyncQueueItem>[]);
+      when(
+        () => mockSyncRepo.simulateRemoteConflict('p1'),
       ).thenAnswer((_) async {});
+      stubEmptyDownloads();
 
-      await syncManager.simulateRemoteConflict('p1');
-
+      // First sync — processes the queued conflict
+      await syncManager.performFullSync();
       verify(() => mockSyncRepo.simulateRemoteConflict('p1')).called(1);
+
+      // Second sync — queue should be empty, no conflict call
+      await syncManager.performFullSync();
+      verifyNever(() => mockSyncRepo.simulateRemoteConflict(any()));
     });
   });
 

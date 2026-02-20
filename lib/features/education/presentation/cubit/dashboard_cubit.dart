@@ -116,25 +116,14 @@ class DashboardCubit extends Cubit<DashboardState> {
     await _syncManager.performFullSync();
   }
 
-  /// Simulates a remote conflict by writing directly to Firestore
-  /// with a future timestamp (100%, +1h).
-  Future<void> simulateRemoteConflict(String progressId) async {
-    emit(state.copyWith(errorMessage: null));
-    try {
-      log.i(
-        'Simulating remote conflict for progressId=$progressId',
-        tag: LogTags.bloc,
-      );
-      await _syncManager.simulateRemoteConflict(progressId);
-    } catch (e, s) {
-      log.e(
-        'Failed to simulate remote conflict',
-        tag: LogTags.bloc,
-        error: e,
-        stackTrace: s,
-      );
-      emit(state.copyWith(errorMessage: 'Failed to simulate remote conflict'));
-    }
+  /// Queues a remote conflict simulation for the next sync cycle.
+  /// Safe to call offline — no network call is made.
+  void simulateRemoteConflict(String progressId) {
+    log.i(
+      'Queuing conflict simulation for progressId=$progressId',
+      tag: LogTags.bloc,
+    );
+    _syncManager.queueConflictSimulation(progressId);
   }
 
   /// Helper: get progress percent for a given user+lesson. O(1) lookup.

@@ -39,6 +39,9 @@ class SyncManager {
   ConnectivityState _currentConnectivity = ConnectivityState.offline;
   bool _isSyncing = false;
 
+  /// Queued conflict simulation progressIds to execute during next sync.
+  final List<String> _pendingConflictSimulations = <String>[];
+
   ConnectivityState get currentConnectivity => _currentConnectivity;
 
   @visibleForTesting
@@ -94,6 +97,7 @@ class SyncManager {
 
     try {
       await _processUploadQueue();
+      await _processConflictSimulations();
       await _processDownloadUpdates();
       _statusController.add(SyncEngineStatus.idle);
       log.i('=== Full Sync Completed ===', tag: LogTags.sync);
@@ -235,9 +239,42 @@ class SyncManager {
     }
   }
 
-  /// Directly writes a conflict document into Firestore for LWW demo.
-  Future<void> simulateRemoteConflict(String progressId) async {
-    await _syncRepository.simulateRemoteConflict(progressId);
+  /// Queues a conflict simulation to be executed during the next sync cycle.
+  /// This is safe to call while offline — no network call is made.
+  void queueConflictSimulation(String progressId) {
+    _pendingConflictSimulations.add(progressId);
+    log.i(
+      'Queued conflict simulation for progressId=$progressId',
+      tag: LogTags.sync,
+    );
+  }
+
+  /// Executes queued conflict simulations against Firestore.
+  /// Runs AFTER uploads (so the doc exists) and BEFORE downloads (so LWW
+  /// sees the newer timestamp).
+  Future<void> _processConflictSimulations() async {
+    if (_pendingConflictSimulations.isEmpty) return;
+
+    log.i(
+      'Processing ${_pendingConflictSimulations.length} conflict simulations',
+      tag: LogTags.sync,
+    );
+
+    for (final String progressId in _pendingConflictSimulations) {
+      try {
+        await _syncRepository.simulateRemoteConflict(progressId);
+        log.i(
+          'Conflict simulation applied for progressId=$progressId',
+          tag: LogTags.sync,
+        );
+      } catch (e) {
+        log.w(
+          'Conflict simulation failed for progressId=$progressId',
+          tag: LogTags.sync,
+        );
+      }
+    }
+    _pendingConflictSimulations.clear();
   }
 
   void dispose() {

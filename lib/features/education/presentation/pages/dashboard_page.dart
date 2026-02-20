@@ -108,18 +108,16 @@ class DashboardPage extends StatelessWidget {
                               )
                             : null,
                         onSimulateConflict: progressId != null
-                            ? () async {
-                                await cubit.simulateRemoteConflict(progressId);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Conflict seeded in Firestore (100%, +1h). '
-                                        'Tap Sync to see LWW resolution.',
-                                      ),
+                            ? () {
+                                cubit.simulateRemoteConflict(progressId);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Conflict queued (100%, +1h). '
+                                      'Go online & Sync to see LWW resolution.',
                                     ),
-                                  );
-                                }
+                                  ),
+                                );
                               }
                             : null,
                       );
