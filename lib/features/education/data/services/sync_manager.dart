@@ -235,21 +235,9 @@ class SyncManager {
     }
   }
 
-  /// Seeds conflict data on the mock server for LWW demo purposes.
-  void seedConflictData({
-    required String progressId,
-    required String userId,
-    required String lessonId,
-    required int progressPercent,
-    required DateTime updatedAt,
-  }) {
-    _syncRepository.seedConflictData(
-      progressId: progressId,
-      userId: userId,
-      lessonId: lessonId,
-      progressPercent: progressPercent,
-      updatedAt: updatedAt,
-    );
+  /// Directly writes a conflict document into Firestore for LWW demo.
+  Future<void> simulateRemoteConflict(String progressId) async {
+    await _syncRepository.simulateRemoteConflict(progressId);
   }
 
   void dispose() {

@@ -1,56 +1,48 @@
 import 'package:injectable/injectable.dart';
 
 import 'package:global_smart_education_platform/core/logger/app_logger.dart';
+import 'package:global_smart_education_platform/features/education/data/datasources/remote/firebase_remote_data_source.dart';
 import 'package:global_smart_education_platform/features/education/data/datasources/remote/remote_data_source.dart';
 
 /// Repository that encapsulates all remote data source interactions.
-/// SyncManager and Cubit should never access RemoteDataSource directly.
+/// Progress operations route to Firebase; Users/Lessons stay on mock.
 @LazySingleton()
 class SyncRepository {
-  SyncRepository(this._remoteDataSource);
+  SyncRepository(this._mockDataSource, this._firebaseDataSource);
 
-  final RemoteDataSource _remoteDataSource;
+  final RemoteDataSource _mockDataSource;
+  final FirebaseRemoteDataSource _firebaseDataSource;
 
-  // ── Upload ──
+  // ── Upload (Firebase) ──
 
-  Future<bool> uploadProgress(Map<String, dynamic> payload) async {
-    return _remoteDataSource.uploadProgress(payload);
+  Future<void> uploadProgress(Map<String, dynamic> payload) async {
+    await _firebaseDataSource.uploadProgress(payload);
   }
 
   // ── Download ──
 
+  /// Users and Lessons remain from the mock data source (static seed data).
   Future<List<Map<String, dynamic>>> fetchUsers() async {
-    return _remoteDataSource.fetchUsers();
+    return _mockDataSource.fetchUsers();
   }
 
   Future<List<Map<String, dynamic>>> fetchLessons() async {
-    return _remoteDataSource.fetchLessons();
+    return _mockDataSource.fetchLessons();
   }
 
+  /// Progress is fetched from Firebase Firestore.
   Future<List<Map<String, dynamic>>> fetchAllProgress() async {
-    return _remoteDataSource.fetchAllProgress();
+    return _firebaseDataSource.fetchAllProgress();
   }
 
-  // ── Conflict Demo ──
+  // ── Conflict Demo (Firebase) ──
 
-  /// Seeds a newer progress entry on the mock server for LWW demo.
-  void seedConflictData({
-    required String progressId,
-    required String userId,
-    required String lessonId,
-    required int progressPercent,
-    required DateTime updatedAt,
-  }) {
-    _remoteDataSource.seedConflictData(
-      progressId: progressId,
-      userId: userId,
-      lessonId: lessonId,
-      progressPercent: progressPercent,
-      updatedAt: updatedAt,
-    );
+  /// Directly writes a newer timestamp into Firestore to simulate a
+  /// remote conflict from another device.
+  Future<void> simulateRemoteConflict(String progressId) async {
+    await _firebaseDataSource.simulateRemoteConflict(progressId);
     log.i(
-      'SyncRepository: Seeded conflict data '
-      '(user=$userId, lesson=$lessonId, progress=$progressPercent%)',
+      'SyncRepository: Remote conflict simulated for progressId=$progressId',
       tag: LogTags.sync,
     );
   }

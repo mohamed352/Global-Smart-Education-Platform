@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "458120507925",
+    "project_id": "mangmeant-e919b",
+    "storage_bucket": "mangmeant-e919b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458120507925:android:601345f8001eba59d4541c",
+        "android_client_info": {
+          "package_name": "com.constructing.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKIhIAGZwn0HpYZ8Y8pz9n7fJuMIy2K_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458120507925:android:b41008238ba30049d4541c",
+        "android_client_info": {
+          "package_name": "com.constructing.user"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKIhIAGZwn0HpYZ8Y8pz9n7fJuMIy2K_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458120507925:android:148d3ec7fb47cec8d4541c",
+        "android_client_info": {
+          "package_name": "com.example.global_smart_education_platform"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKIhIAGZwn0HpYZ8Y8pz9n7fJuMIy2K_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

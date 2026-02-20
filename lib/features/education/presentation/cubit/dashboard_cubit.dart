@@ -116,20 +116,25 @@ class DashboardCubit extends Cubit<DashboardState> {
     await _syncManager.performFullSync();
   }
 
-  /// Seeds a conflict scenario on the mock server for demo purposes.
-  void seedConflictDemo({
-    required String progressId,
-    required String userId,
-    required String lessonId,
-  }) {
-    log.i('Seeding conflict demo data on mock server', tag: LogTags.bloc);
-    _syncManager.seedConflictData(
-      progressId: progressId,
-      userId: userId,
-      lessonId: lessonId,
-      progressPercent: 95,
-      updatedAt: DateTime.now().add(const Duration(hours: 1)),
-    );
+  /// Simulates a remote conflict by writing directly to Firestore
+  /// with a future timestamp (100%, +1h).
+  Future<void> simulateRemoteConflict(String progressId) async {
+    emit(state.copyWith(errorMessage: null));
+    try {
+      log.i(
+        'Simulating remote conflict for progressId=$progressId',
+        tag: LogTags.bloc,
+      );
+      await _syncManager.simulateRemoteConflict(progressId);
+    } catch (e, s) {
+      log.e(
+        'Failed to simulate remote conflict',
+        tag: LogTags.bloc,
+        error: e,
+        stackTrace: s,
+      );
+      emit(state.copyWith(errorMessage: 'Failed to simulate remote conflict'));
+    }
   }
 
   /// Helper: get progress percent for a given user+lesson. O(1) lookup.
@@ -140,6 +145,11 @@ class DashboardCubit extends Cubit<DashboardState> {
   /// Helper: get sync status string for a given user+lesson. O(1) lookup.
   String getProgressSyncStatus(String userId, String lessonId) {
     return _progressMap['${userId}_$lessonId']?.syncStatus ?? 'none';
+  }
+
+  /// Helper: get progress ID for a given user+lesson. O(1) lookup.
+  String? getProgressId(String userId, String lessonId) {
+    return _progressMap['${userId}_$lessonId']?.id;
   }
 
   @override

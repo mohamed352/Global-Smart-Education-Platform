@@ -112,9 +112,7 @@ void main() {
         when(
           () => mockEducationRepo.getPendingSyncItems(),
         ).thenAnswer((_) async => <SyncQueueItem>[item]);
-        when(
-          () => mockSyncRepo.uploadProgress(any()),
-        ).thenAnswer((_) async => true);
+        when(() => mockSyncRepo.uploadProgress(any())).thenAnswer((_) async {});
         when(
           () => mockEducationRepo.markProgressSynced('p1'),
         ).thenAnswer((_) async {});
@@ -233,37 +231,73 @@ void main() {
     });
   });
 
-  group('seedConflictData', () {
-    test('delegates to SyncRepository', () {
+  group('simulateRemoteConflict', () {
+    test('delegates to SyncRepository', () async {
       when(
-        () => mockSyncRepo.seedConflictData(
-          progressId: any(named: 'progressId'),
-          userId: any(named: 'userId'),
-          lessonId: any(named: 'lessonId'),
-          progressPercent: any(named: 'progressPercent'),
-          updatedAt: any(named: 'updatedAt'),
-        ),
-      ).thenReturn(null);
+        () => mockSyncRepo.simulateRemoteConflict(any()),
+      ).thenAnswer((_) async {});
 
-      final DateTime testTime = DateTime(2025, 6);
-      syncManager.seedConflictData(
-        progressId: 'p1',
-        userId: 'u1',
-        lessonId: 'l1',
-        progressPercent: 95,
-        updatedAt: testTime,
-      );
+      await syncManager.simulateRemoteConflict('p1');
 
-      verify(
-        () => mockSyncRepo.seedConflictData(
-          progressId: 'p1',
+      verify(() => mockSyncRepo.simulateRemoteConflict('p1')).called(1);
+    });
+  });
+
+  group('queue mechanism — offline update then online sync', () {
+    test(
+      'offline: updateProgress creates queue item, no upload call; '
+      'online: performFullSync processes the queue and calls uploadProgress',
+      () async {
+        // ── Phase 1: OFFLINE — updateProgress writes locally ──
+        // SyncManager is offline by default.
+        // The repository.updateProgress (called by the cubit) writes to
+        // local DB + SyncQueue atomically. We verify NO remote call happens.
+
+        when(
+          () => mockEducationRepo.updateProgress(
+            userId: any(named: 'userId'),
+            lessonId: any(named: 'lessonId'),
+            incrementBy: any(named: 'incrementBy'),
+          ),
+        ).thenAnswer((_) async {});
+
+        await mockEducationRepo.updateProgress(
           userId: 'u1',
           lessonId: 'l1',
-          progressPercent: 95,
-          updatedAt: testTime,
-        ),
-      ).called(1);
-    });
+          incrementBy: 10,
+        );
+
+        // Offline: performFullSync should bail out immediately.
+        await syncManager.performFullSync();
+
+        // No upload attempted while offline.
+        verifyNever(() => mockSyncRepo.uploadProgress(any()));
+
+        // ── Phase 2: ONLINE — SyncManager processes the queue ──
+        syncManager.currentConnectivityForTest = ConnectivityState.online;
+
+        final SyncQueueItem queuedItem = buildQueueItem(id: 1, entityId: 'p1');
+
+        when(
+          () => mockEducationRepo.getPendingSyncItems(),
+        ).thenAnswer((_) async => <SyncQueueItem>[queuedItem]);
+        when(() => mockSyncRepo.uploadProgress(any())).thenAnswer((_) async {});
+        when(
+          () => mockEducationRepo.markProgressSynced('p1'),
+        ).thenAnswer((_) async {});
+        when(
+          () => mockEducationRepo.deleteSyncQueueItem(1),
+        ).thenAnswer((_) async {});
+        stubEmptyDownloads();
+
+        await syncManager.performFullSync();
+
+        // Upload WAS called now that we are online.
+        verify(() => mockSyncRepo.uploadProgress(any())).called(1);
+        verify(() => mockEducationRepo.markProgressSynced('p1')).called(1);
+        verify(() => mockEducationRepo.deleteSyncQueueItem(1)).called(1);
+      },
+    );
   });
 
   group('seedInitialData', () {

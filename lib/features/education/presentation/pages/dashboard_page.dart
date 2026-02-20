@@ -92,31 +92,34 @@ class DashboardPage extends StatelessWidget {
                         lesson.id,
                       );
 
+                      final String? progressId = cubit.getProgressId(
+                        data.userId,
+                        lesson.id,
+                      );
+
                       return _LessonCard(
                         lesson: lesson,
                         progressPercent: progressPercent,
                         syncStatus: syncStatus,
-                        onIncrement: data.userId.isNotEmpty
+                        onUpdateOffline: data.userId.isNotEmpty
                             ? () => cubit.updateProgress(
                                 userId: data.userId,
                                 lessonId: lesson.id,
                               )
                             : null,
-                        onSeedConflict: data.userId.isNotEmpty
-                            ? () {
-                                cubit.seedConflictDemo(
-                                  progressId: '',
-                                  userId: data.userId,
-                                  lessonId: lesson.id,
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Conflict seeded on server (95%, +1h). '
-                                      'Tap Sync to see LWW resolution.',
+                        onSimulateConflict: progressId != null
+                            ? () async {
+                                await cubit.simulateRemoteConflict(progressId);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Conflict seeded in Firestore (100%, +1h). '
+                                        'Tap Sync to see LWW resolution.',
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                }
                               }
                             : null,
                       );
@@ -182,15 +185,15 @@ class _LessonCard extends StatelessWidget {
     required this.lesson,
     required this.progressPercent,
     required this.syncStatus,
-    required this.onIncrement,
-    required this.onSeedConflict,
+    required this.onUpdateOffline,
+    required this.onSimulateConflict,
   });
 
   final Lesson lesson;
   final int progressPercent;
   final String syncStatus;
-  final VoidCallback? onIncrement;
-  final VoidCallback? onSeedConflict;
+  final VoidCallback? onUpdateOffline;
+  final VoidCallback? onSimulateConflict;
 
   @override
   Widget build(BuildContext context) {
@@ -269,14 +272,14 @@ class _LessonCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 FilledButton.icon(
-                  onPressed: progressPercent >= 100 ? null : onIncrement,
+                  onPressed: progressPercent >= 100 ? null : onUpdateOffline,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('+10%'),
+                  label: const Text('Update Progress Offline'),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
-                  onPressed: onSeedConflict,
-                  child: const Text('Seed Conflict'),
+                  onPressed: onSimulateConflict,
+                  child: const Text('Simulate Remote Conflict'),
                 ),
               ],
             ),
