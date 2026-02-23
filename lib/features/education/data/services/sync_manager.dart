@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:injectable/injectable.dart';
 
+import 'package:drift/drift.dart';
 import 'package:global_smart_education_platform/core/constants/sync_constants.dart';
 import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 import 'package:global_smart_education_platform/features/education/data/datasources/local/database.dart';
@@ -207,9 +208,12 @@ class SyncManager {
 
   /// Seeds initial data into local DB on first launch.
   Future<void> seedInitialData() async {
+    // Always seed offline lessons (idempotent)
+    await seedOfflineLessons();
+
     final List<User> existingUsers = await _repository.getUsers();
     if (existingUsers.isNotEmpty) {
-      log.d('Data already seeded, skipping', tag: LogTags.db);
+      log.d('Data already seeded, skipping remote seed', tag: LogTags.db);
       return;
     }
 
@@ -237,6 +241,82 @@ class SyncManager {
         stackTrace: s,
       );
     }
+  }
+
+  /// Seeds offline lessons into local DB. Idempotent — updates if already present.
+  Future<void> seedOfflineLessons() async {
+    const String solarSystemId = '550e8400-e29b-41d4-a716-446655440001';
+
+    log.i('Seeding/Updating offline lesson: النظام الشمسي', tag: LogTags.db);
+
+    const String lessonContent = '''
+النظام الشمسي
+
+مقدمة
+
+النظام الشمسي هو مجموعة من الاجرام السماوية التي تدور حول نجم يسمى الشمس. يقع النظام الشمسي في مجرة درب التبانة، ويتكون من الشمس وثمانية كواكب رئيسية واقمارها، بالاضافة الى الكويكبات والمذنبات والنيازك. تعد دراسة النظام الشمسي من اهم فروع علم الفلك، اذ تساعدنا على فهم الكون الذي نعيش فيه.
+
+الشمس
+
+الشمس هي النجم المركزي في نظامنا الشمسي، وهي اكبر جرم سماوي فيه. تتكون الشمس بشكل رئيسي من غازي الهيدروجين والهيليوم. تبلغ درجة حرارة سطح الشمس نحو 5500 درجة مئوية، بينما تصل درجة حرارة مركزها الى نحو 15 مليون درجة مئوية. تنتج الشمس الطاقة من خلال تفاعلات الاندماج النووي التي تحدث في مركزها، وهذه الطاقة هي مصدر الضوء والحرارة اللذين تعتمد عليهما الحياة على كوكب الارض.
+
+الكواكب الداخلية
+
+تسمى الكواكب الاربعة القريبة من الشمس بالكواكب الداخلية او الكواكب الصخرية، وهي:
+
+عطارد: هو اصغر كواكب النظام الشمسي واقربها الى الشمس. ليس له غلاف جوي يذكر، ودرجات الحرارة على سطحه متباينة جدا بين النهار والليل.
+
+الزهرة: هو ثاني الكواكب بعدا عن الشمس، ويشبه الارض في الحجم. يتميز بغلاف جوي كثيف يتكون بشكل رئيسي من ثاني اكسيد الكربون، مما يجعله اسخن كوكب في النظام الشمسي بسبب ظاهرة الاحتباس الحراري.
+
+الارض: هي ثالث الكواكب بعدا عن الشمس، والكوكب الوحيد المعروف الذي توجد عليه حياة. تتميز الارض بوجود الماء السائل على سطحها وغلاف جوي يحتوي على الاكسجين. يدور حولها قمر واحد.
+
+المريخ: هو رابع الكواكب بعدا عن الشمس، ويسمى الكوكب الاحمر بسبب لون سطحه المائل الى الحمرة نتيجة وجود اكسيد الحديد. يمتلك المريخ غلافا جويا رقيقا، وله قمران صغيران هما فوبوس وديموس.
+
+حزام الكويكبات
+
+يقع حزام الكويكبات بين كوكبي المريخ والمشتري، ويتكون من ملايين الاجسام الصخرية المتفاوتة في الحجم. يعتقد العلماء ان هذه الكويكبات هي بقايا مواد لم تتمكن من التجمع لتكوين كوكب بسبب قوة جاذبية كوكب المشتري الهائلة.
+
+الكواكب الخارجية
+
+تسمى الكواكب الاربعة البعيدة عن الشمس بالكواكب الخارجية او الكواكب الغازية العملاقة، وهي:
+
+المشتري: هو اكبر كواكب النظام الشمسي. يتكون بشكل رئيسي من الهيدروجين والهيليوم، ويتميز ببقعته الحمراء الكبرى وهي عاصفة ضخمة مستمرة منذ مئات السنين. يمتلك المشتري اكثر من 90 قمرا معروفا.
+
+زحل: يشتهر بحلقاته الجميلة المكونة من جسيمات جليدية وصخرية. وهو ثاني اكبر كوكب في النظام الشمسي، ويتميز بكثافته المنخفضة جدا.
+
+اورانوس: يتميز بميله الشديد على محوره حيث يبدو وكانه يدور على جانبه. يصنف كعملاق جليدي ويتكون من الهيدروجين والهيليوم والماء والامونيا والميثان.
+
+نبتون: هو ابعد الكواكب عن الشمس. يتميز بلونه الازرق الناتج عن وجود غاز الميثان في غلافه الجوي، وتهب عليه رياح شديدة تعد من اسرع الرياح في النظام الشمسي.
+
+المذنبات والنيازك
+
+المذنبات هي اجسام جليدية تدور حول الشمس في مدارات بيضاوية طويلة. عندما تقترب من الشمس، يتبخر جزء من جليدها مكونا ذيلا مضيئا. اما النيازك فهي اجسام صخرية صغيرة تدخل الغلاف الجوي للارض وتحترق مكونة ما يعرف بالشهب.
+
+اسئلة المراجعة
+
+1. ما النجم المركزي في النظام الشمسي وما اهميته للحياة على الارض؟
+2. اذكر الكواكب الداخلية الاربعة بالترتيب حسب بعدها عن الشمس.
+3. لماذا يسمى كوكب المريخ بالكوكب الاحمر؟
+4. ما الفرق بين الكواكب الداخلية والكواكب الخارجية من حيث التركيب؟
+5. ما المذنبات وماذا يحدث لها عندما تقترب من الشمس؟
+''';
+
+    await _repository.upsertLessonFromLocal(
+      LessonsCompanion(
+        id: const Value<String>(solarSystemId),
+        title: const Value<String>('النظام الشمسي'),
+        description: const Value<String>(
+          'درس علوم للصف السابع عن النظام الشمسي والكواكب',
+        ),
+        content: const Value<String>(lessonContent),
+        audioPath: const Value<String>(r'd:\work\Global-Smart-Education-Platform\assets\audio\solar_system.mp3'),
+        durationMinutes: const Value<int>(30),
+        updatedAt: Value<DateTime>(DateTime.now()),
+        syncStatus: Value<String>(SyncStatus.synced.name),
+      ),
+    );
+
+    log.i('Offline lesson seeded successfully', tag: LogTags.db);
   }
 
   /// Queues a conflict simulation to be executed during the next sync cycle.

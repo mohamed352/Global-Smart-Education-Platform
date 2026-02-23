@@ -35,10 +35,31 @@ class EducationRepository {
 
   Future<List<Progress>> getProgresses() => _db.getAllProgresses();
 
+  Future<Lesson?> getLessonById(String id) => _db.getLessonById(id);
+
   Future<Progress?> getProgressByUserAndLesson(
     String userId,
     String lessonId,
   ) => _db.getProgressByUserAndLesson(userId, lessonId);
+
+  /// Marks a lesson as 100% completed for a user (offline-first).
+  Future<void> markLessonCompleted({
+    required String userId,
+    required String lessonId,
+  }) async {
+    final Progress? existing = await getProgressByUserAndLesson(
+      userId,
+      lessonId,
+    );
+    final int currentPercent = existing?.progressPercent ?? 0;
+    if (currentPercent >= 100) return;
+
+    await updateProgress(
+      userId: userId,
+      lessonId: lessonId,
+      incrementBy: 100 - currentPercent,
+    );
+  }
 
   Future<List<SyncQueueItem>> getPendingSyncItems() =>
       _db.getPendingSyncItems();
@@ -148,6 +169,11 @@ class EducationRepository {
         syncStatus: Value<String>(SyncStatus.synced.name),
       ),
     );
+  }
+
+  /// Inserts a lesson directly from local data (for offline seeding).
+  Future<void> upsertLessonFromLocal(LessonsCompanion lesson) async {
+    await _db.upsertLesson(lesson);
   }
 
   /// Upserts progress ONLY if remote is newer (Last-Write-Wins).

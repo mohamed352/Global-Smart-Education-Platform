@@ -110,6 +110,8 @@ void main() {
           id: 'l1',
           title: 'Algebra',
           description: 'Desc',
+          content: 'Content test',
+          audioPath: 'assets/audio/test.mp3',
           durationMinutes: 45,
           updatedAt: DateTime.now(),
           syncStatus: 'synced',

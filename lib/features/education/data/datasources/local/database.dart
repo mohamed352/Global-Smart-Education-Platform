@@ -27,6 +27,8 @@ class Lessons extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
   TextColumn get description => text()();
+  TextColumn get content => text().withDefault(const Constant(''))();
+  TextColumn get audioPath => text().withDefault(const Constant(''))();
   IntColumn get durationMinutes => integer()();
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
@@ -67,7 +69,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) => m.createAll(),
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        await m.addColumn(lessons, lessons.content);
+        await m.addColumn(lessons, lessons.audioPath);
+      }
+    },
+  );
 
   // ── User Queries ──
 
@@ -83,6 +96,9 @@ class AppDatabase extends _$AppDatabase {
   Future<List<Lesson>> getAllLessons() => select(lessons).get();
 
   Stream<List<Lesson>> watchAllLessons() => select(lessons).watch();
+
+  Future<Lesson?> getLessonById(String id) =>
+      (select(lessons)..where((l) => l.id.equals(id))).getSingleOrNull();
 
   Future<void> upsertLesson(LessonsCompanion lesson) =>
       into(lessons).insertOnConflictUpdate(lesson);

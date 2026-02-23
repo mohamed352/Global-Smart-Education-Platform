@@ -25,6 +25,7 @@ import '../../features/education/data/repositories/sync_repository.dart'
 import '../../features/education/data/services/sync_manager.dart' as _i388;
 import '../../features/education/presentation/cubit/dashboard_cubit.dart'
     as _i694;
+import '../../features/education/presentation/cubit/lesson_cubit.dart' as _i247;
 import 'firebase_module.dart' as _i616;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -43,6 +44,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i898.FirebaseRemoteDataSource>(
       () => _i898.FirebaseRemoteDataSource(gh<_i974.FirebaseFirestore>()),
+    );
+    gh.factory<_i247.LessonCubit>(
+      () => _i247.LessonCubit(gh<_i562.EducationRepository>()),
     );
     gh.lazySingleton<_i187.SyncRepository>(
       () => _i187.SyncRepository(
