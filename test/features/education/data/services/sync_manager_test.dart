@@ -13,7 +13,13 @@ class MockEducationRepository extends Mock implements EducationRepository {}
 
 class MockSyncRepository extends Mock implements SyncRepository {}
 
+class LessonsCompanionFake extends Fake implements LessonsCompanion {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(LessonsCompanionFake());
+  });
+
   late MockEducationRepository mockEducationRepo;
   late MockSyncRepository mockSyncRepo;
   late SyncManager syncManager;
@@ -22,6 +28,10 @@ void main() {
     mockEducationRepo = MockEducationRepository();
     mockSyncRepo = MockSyncRepository();
     syncManager = SyncManager(mockEducationRepo, mockSyncRepo);
+
+    // Default stubs for seeding
+    when(() => mockEducationRepo.upsertLessonFromLocal(any())).thenAnswer((_) async {});
+    when(() => mockEducationRepo.seedSampleLesson()).thenAnswer((_) async {});
   });
 
   tearDown(() {

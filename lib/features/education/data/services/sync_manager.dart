@@ -210,6 +210,7 @@ class SyncManager {
   Future<void> seedInitialData() async {
     // Always seed offline lessons (idempotent)
     await seedOfflineLessons();
+    await _repository.seedSampleLesson();
 
     final List<User> existingUsers = await _repository.getUsers();
     if (existingUsers.isNotEmpty) {
@@ -310,6 +311,7 @@ class SyncManager {
         ),
         content: const Value<String>(lessonContent),
         audioPath: const Value<String>('assets/audio/sound1.mp3'),
+        videoPath: const Value<String>(''),
         durationMinutes: const Value<int>(30),
         updatedAt: Value<DateTime>(DateTime.now()),
         syncStatus: Value<String>(SyncStatus.synced.name),

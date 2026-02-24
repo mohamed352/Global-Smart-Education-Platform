@@ -57,6 +57,10 @@ dependencies:
   # Audio Playback (offline)
   just_audio: ^0.9.43
   just_audio_windows: ^0.2.1
+  audioplayers: ^6.1.0
+
+  # Video Playback
+  video_player: ^2.9.2
 
   # Firebase
   firebase_core: ^4.4.0

@@ -164,8 +164,36 @@ class EducationRepository {
         id: Value<String>(data['id'] as String),
         title: Value<String>(data['title'] as String),
         description: Value<String>(data['description'] as String),
+        content: Value<String>(data['content'] as String? ?? ''),
+        audioPath: Value<String>(data['audioPath'] as String? ?? ''),
+        videoPath: Value<String>(data['videoPath'] as String? ?? ''),
         durationMinutes: Value<int>(data['durationMinutes'] as int),
         updatedAt: Value<DateTime>(DateTime.parse(data['updatedAt'] as String)),
+        syncStatus: Value<String>(SyncStatus.synced.name),
+      ),
+    );
+  }
+
+  /// Seeds a sample lesson for demonstration.
+  Future<void> seedSampleLesson() async {
+    final DateTime now = DateTime.now();
+    await upsertLessonFromLocal(
+      LessonsCompanion(
+        id: const Value<String>('sample-lesson-1'),
+        title: const Value<String>('Alternative Teacher - Sample Lesson'),
+        description: const Value<String>('A sample lesson for demonstrating offline-first features.'),
+        content: const Value<String>(
+          'Welcome to the Global Smart Education Platform.\n\n'
+          'This is a sample lesson designed to showcase the offline-first approach. '
+          'Even without an internet connection, you can access your lessons, '
+          'listen to audio explanations, and watch educational videos.\n\n'
+          'The "Alternative Teacher" feature provides an interactive way to learn '
+          'through multiple media formats.',
+        ),
+        audioPath: const Value<String>('assets/audio/sample-3s.mp3'),
+        videoPath: const Value<String>(''),
+        durationMinutes: const Value<int>(5),
+        updatedAt: Value<DateTime>(now),
         syncStatus: Value<String>(SyncStatus.synced.name),
       ),
     );

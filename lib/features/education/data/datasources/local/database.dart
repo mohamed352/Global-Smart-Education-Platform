@@ -29,6 +29,7 @@ class Lessons extends Table {
   TextColumn get description => text()();
   TextColumn get content => text().withDefault(const Constant(''))();
   TextColumn get audioPath => text().withDefault(const Constant(''))();
+  TextColumn get videoPath => text().withDefault(const Constant(''))();
   IntColumn get durationMinutes => integer()();
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
@@ -69,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -78,6 +79,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.addColumn(lessons, lessons.content);
         await m.addColumn(lessons, lessons.audioPath);
+      }
+      if (from < 3) {
+        await m.addColumn(lessons, lessons.videoPath);
       }
     },
   );

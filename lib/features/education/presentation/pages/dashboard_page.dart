@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:global_smart_education_platform/features/education/presentation/screens/alternative_teacher_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:global_smart_education_platform/features/education/data/services/sync_manager.dart';
@@ -61,6 +62,19 @@ class _DashboardBody extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Card(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: ListTile(
+                leading: const Icon(Icons.school, size: 40),
+                title: const Text('Simple Alternative Teacher', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Try the new offline-first interactive lesson prototype'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const AlternativeTeacherScreen()),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             if (state.users.isNotEmpty) ...[
               Text('Student Info', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),

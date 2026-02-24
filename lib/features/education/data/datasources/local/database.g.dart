@@ -418,6 +418,18 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _videoPathMeta = const VerificationMeta(
+    'videoPath',
+  );
+  @override
+  late final GeneratedColumn<String> videoPath = GeneratedColumn<String>(
+    'video_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _durationMinutesMeta = const VerificationMeta(
     'durationMinutes',
   );
@@ -459,6 +471,7 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
     description,
     content,
     audioPath,
+    videoPath,
     durationMinutes,
     updatedAt,
     syncStatus,
@@ -509,6 +522,12 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
       context.handle(
         _audioPathMeta,
         audioPath.isAcceptableOrUnknown(data['audio_path']!, _audioPathMeta),
+      );
+    }
+    if (data.containsKey('video_path')) {
+      context.handle(
+        _videoPathMeta,
+        videoPath.isAcceptableOrUnknown(data['video_path']!, _videoPathMeta),
       );
     }
     if (data.containsKey('duration_minutes')) {
@@ -565,6 +584,10 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
         DriftSqlType.string,
         data['${effectivePrefix}audio_path'],
       )!,
+      videoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}video_path'],
+      )!,
       durationMinutes: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}duration_minutes'],
@@ -592,6 +615,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
   final String description;
   final String content;
   final String audioPath;
+  final String videoPath;
   final int durationMinutes;
   final DateTime updatedAt;
   final String syncStatus;
@@ -601,6 +625,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     required this.description,
     required this.content,
     required this.audioPath,
+    required this.videoPath,
     required this.durationMinutes,
     required this.updatedAt,
     required this.syncStatus,
@@ -613,6 +638,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     map['description'] = Variable<String>(description);
     map['content'] = Variable<String>(content);
     map['audio_path'] = Variable<String>(audioPath);
+    map['video_path'] = Variable<String>(videoPath);
     map['duration_minutes'] = Variable<int>(durationMinutes);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['sync_status'] = Variable<String>(syncStatus);
@@ -626,6 +652,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       description: Value(description),
       content: Value(content),
       audioPath: Value(audioPath),
+      videoPath: Value(videoPath),
       durationMinutes: Value(durationMinutes),
       updatedAt: Value(updatedAt),
       syncStatus: Value(syncStatus),
@@ -643,6 +670,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       description: serializer.fromJson<String>(json['description']),
       content: serializer.fromJson<String>(json['content']),
       audioPath: serializer.fromJson<String>(json['audioPath']),
+      videoPath: serializer.fromJson<String>(json['videoPath']),
       durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
@@ -657,6 +685,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       'description': serializer.toJson<String>(description),
       'content': serializer.toJson<String>(content),
       'audioPath': serializer.toJson<String>(audioPath),
+      'videoPath': serializer.toJson<String>(videoPath),
       'durationMinutes': serializer.toJson<int>(durationMinutes),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncStatus': serializer.toJson<String>(syncStatus),
@@ -669,6 +698,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     String? description,
     String? content,
     String? audioPath,
+    String? videoPath,
     int? durationMinutes,
     DateTime? updatedAt,
     String? syncStatus,
@@ -678,6 +708,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     description: description ?? this.description,
     content: content ?? this.content,
     audioPath: audioPath ?? this.audioPath,
+    videoPath: videoPath ?? this.videoPath,
     durationMinutes: durationMinutes ?? this.durationMinutes,
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
@@ -691,6 +722,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
           : this.description,
       content: data.content.present ? data.content.value : this.content,
       audioPath: data.audioPath.present ? data.audioPath.value : this.audioPath,
+      videoPath: data.videoPath.present ? data.videoPath.value : this.videoPath,
       durationMinutes: data.durationMinutes.present
           ? data.durationMinutes.value
           : this.durationMinutes,
@@ -709,6 +741,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
           ..write('description: $description, ')
           ..write('content: $content, ')
           ..write('audioPath: $audioPath, ')
+          ..write('videoPath: $videoPath, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus')
@@ -723,6 +756,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     description,
     content,
     audioPath,
+    videoPath,
     durationMinutes,
     updatedAt,
     syncStatus,
@@ -736,6 +770,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
           other.description == this.description &&
           other.content == this.content &&
           other.audioPath == this.audioPath &&
+          other.videoPath == this.videoPath &&
           other.durationMinutes == this.durationMinutes &&
           other.updatedAt == this.updatedAt &&
           other.syncStatus == this.syncStatus);
@@ -747,6 +782,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
   final Value<String> description;
   final Value<String> content;
   final Value<String> audioPath;
+  final Value<String> videoPath;
   final Value<int> durationMinutes;
   final Value<DateTime> updatedAt;
   final Value<String> syncStatus;
@@ -757,6 +793,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     this.description = const Value.absent(),
     this.content = const Value.absent(),
     this.audioPath = const Value.absent(),
+    this.videoPath = const Value.absent(),
     this.durationMinutes = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -768,6 +805,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     required String description,
     this.content = const Value.absent(),
     this.audioPath = const Value.absent(),
+    this.videoPath = const Value.absent(),
     required int durationMinutes,
     required DateTime updatedAt,
     this.syncStatus = const Value.absent(),
@@ -783,6 +821,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     Expression<String>? description,
     Expression<String>? content,
     Expression<String>? audioPath,
+    Expression<String>? videoPath,
     Expression<int>? durationMinutes,
     Expression<DateTime>? updatedAt,
     Expression<String>? syncStatus,
@@ -794,6 +833,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
       if (description != null) 'description': description,
       if (content != null) 'content': content,
       if (audioPath != null) 'audio_path': audioPath,
+      if (videoPath != null) 'video_path': videoPath,
       if (durationMinutes != null) 'duration_minutes': durationMinutes,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -807,6 +847,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     Value<String>? description,
     Value<String>? content,
     Value<String>? audioPath,
+    Value<String>? videoPath,
     Value<int>? durationMinutes,
     Value<DateTime>? updatedAt,
     Value<String>? syncStatus,
@@ -818,6 +859,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
       description: description ?? this.description,
       content: content ?? this.content,
       audioPath: audioPath ?? this.audioPath,
+      videoPath: videoPath ?? this.videoPath,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -843,6 +885,9 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     if (audioPath.present) {
       map['audio_path'] = Variable<String>(audioPath.value);
     }
+    if (videoPath.present) {
+      map['video_path'] = Variable<String>(videoPath.value);
+    }
     if (durationMinutes.present) {
       map['duration_minutes'] = Variable<int>(durationMinutes.value);
     }
@@ -866,6 +911,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
           ..write('description: $description, ')
           ..write('content: $content, ')
           ..write('audioPath: $audioPath, ')
+          ..write('videoPath: $videoPath, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
@@ -2015,6 +2061,7 @@ typedef $$LessonsTableCreateCompanionBuilder =
       required String description,
       Value<String> content,
       Value<String> audioPath,
+      Value<String> videoPath,
       required int durationMinutes,
       required DateTime updatedAt,
       Value<String> syncStatus,
@@ -2027,6 +2074,7 @@ typedef $$LessonsTableUpdateCompanionBuilder =
       Value<String> description,
       Value<String> content,
       Value<String> audioPath,
+      Value<String> videoPath,
       Value<int> durationMinutes,
       Value<DateTime> updatedAt,
       Value<String> syncStatus,
@@ -2087,6 +2135,11 @@ class $$LessonsTableFilterComposer
 
   ColumnFilters<String> get audioPath => $composableBuilder(
     column: $table.audioPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get videoPath => $composableBuilder(
+    column: $table.videoPath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2165,6 +2218,11 @@ class $$LessonsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get videoPath => $composableBuilder(
+    column: $table.videoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get durationMinutes => $composableBuilder(
     column: $table.durationMinutes,
     builder: (column) => ColumnOrderings(column),
@@ -2206,6 +2264,9 @@ class $$LessonsTableAnnotationComposer
 
   GeneratedColumn<String> get audioPath =>
       $composableBuilder(column: $table.audioPath, builder: (column) => column);
+
+  GeneratedColumn<String> get videoPath =>
+      $composableBuilder(column: $table.videoPath, builder: (column) => column);
 
   GeneratedColumn<int> get durationMinutes => $composableBuilder(
     column: $table.durationMinutes,
@@ -2279,6 +2340,7 @@ class $$LessonsTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<String> content = const Value.absent(),
                 Value<String> audioPath = const Value.absent(),
+                Value<String> videoPath = const Value.absent(),
                 Value<int> durationMinutes = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
@@ -2289,6 +2351,7 @@ class $$LessonsTableTableManager
                 description: description,
                 content: content,
                 audioPath: audioPath,
+                videoPath: videoPath,
                 durationMinutes: durationMinutes,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
@@ -2301,6 +2364,7 @@ class $$LessonsTableTableManager
                 required String description,
                 Value<String> content = const Value.absent(),
                 Value<String> audioPath = const Value.absent(),
+                Value<String> videoPath = const Value.absent(),
                 required int durationMinutes,
                 required DateTime updatedAt,
                 Value<String> syncStatus = const Value.absent(),
@@ -2311,6 +2375,7 @@ class $$LessonsTableTableManager
                 description: description,
                 content: content,
                 audioPath: audioPath,
+                videoPath: videoPath,
                 durationMinutes: durationMinutes,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
