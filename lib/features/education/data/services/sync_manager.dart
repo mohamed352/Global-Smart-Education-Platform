@@ -309,7 +309,7 @@ class SyncManager {
           'درس علوم للصف السابع عن النظام الشمسي والكواكب',
         ),
         content: const Value<String>(lessonContent),
-        audioPath: const Value<String>(r'd:\work\Global-Smart-Education-Platform\assets\audio\solar_system.mp3'),
+        audioPath: const Value<String>('assets/audio/sound1.mp3'),
         durationMinutes: const Value<int>(30),
         updatedAt: Value<DateTime>(DateTime.now()),
         syncStatus: Value<String>(SyncStatus.synced.name),
