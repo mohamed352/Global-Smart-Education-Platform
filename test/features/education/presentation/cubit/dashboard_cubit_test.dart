@@ -114,7 +114,7 @@ void main() {
           audioPath: 'assets/audio/test.mp3',
           durationMinutes: 45,
           updatedAt: DateTime.now(),
-          syncStatus: 'synced',
+          syncStatus: 'synced', videoPath: '',
         ),
       ];
 
