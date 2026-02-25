@@ -1,12 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:global_smart_education_platform/core/di/injection.dart';
-import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 import 'package:global_smart_education_platform/features/education/data/services/sync_manager.dart';
-import 'package:global_smart_education_platform/features/education/presentation/cubit/dashboard_cubit.dart';
-import 'package:global_smart_education_platform/features/education/presentation/pages/dashboard_page.dart';
+import 'package:global_smart_education_platform/features/education/presentation/screens/main_screen.dart';
+import 'package:global_smart_education_platform/features/education/presentation/cubit/teacher_explanation_cubit.dart';
 import 'package:global_smart_education_platform/firebase_options.dart';
 
 Future<void> main() async {
@@ -14,11 +15,11 @@ Future<void> main() async {
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  log.i('Firebase initialized');
+  log.i('Firebase initialized', tag: LogTags.app);
 
   // Initialize dependency injection
   await configureDependencies();
-  log.i('Dependencies configured');
+  log.i('Dependencies configured', tag: LogTags.app);
 
   // Initialize SyncManager (connectivity listener)
   final SyncManager syncManager = getIt<SyncManager>();
@@ -26,6 +27,10 @@ Future<void> main() async {
 
   // Seed initial data (Users & Lessons from mock)
   await syncManager.seedInitialData();
+
+  // NOTE: No Gemma model download required!
+  // AI Teacher uses local lesson-content analysis — always ready.
+  log.i('AI Teacher engine ready (offline, no model needed)', tag: LogTags.app);
 
   runApp(const EducationApp());
 }
@@ -35,13 +40,24 @@ class EducationApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<DashboardCubit>(
-      create: (_) => getIt<DashboardCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<TeacherExplanationCubit>(
+          create: (_) => getIt<TeacherExplanationCubit>(),
+        ),
+      ],
       child: MaterialApp(
         title: 'Offline-First Education POC',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-        home: const DashboardPage(),
+        locale: const Locale('ar'),
+        supportedLocales: const [Locale('ar'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const MainScreen(),
       ),
     );
   }

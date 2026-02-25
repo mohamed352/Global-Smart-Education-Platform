@@ -22,10 +22,27 @@ import '../../features/education/data/repositories/education_repository.dart'
     as _i562;
 import '../../features/education/data/repositories/sync_repository.dart'
     as _i187;
+import '../../features/education/data/services/gemma_service.dart' as _i694;
+import '../../features/education/data/services/lesson_ai_service.dart' as _i477;
+import '../../features/education/data/services/media_service.dart' as _i461;
+import '../../features/education/data/services/smart_teacher_service.dart'
+    as _i666;
 import '../../features/education/data/services/sync_manager.dart' as _i388;
+import '../../features/education/data/services/teacher_stt_service.dart'
+    as _i683;
+import '../../features/education/data/services/teacher_tts_service.dart'
+    as _i701;
 import '../../features/education/presentation/cubit/dashboard_cubit.dart'
     as _i694;
+import '../../features/education/presentation/cubit/enhanced_dashboard_cubit.dart'
+    as _i239;
 import '../../features/education/presentation/cubit/lesson_cubit.dart' as _i247;
+import '../../features/education/presentation/cubit/model_installation_cubit.dart'
+    as _i472;
+import '../../features/education/presentation/cubit/smart_teacher_cubit.dart'
+    as _i515;
+import '../../features/education/presentation/cubit/teacher_explanation_cubit.dart'
+    as _i705;
 import 'firebase_module.dart' as _i616;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -39,8 +56,25 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i974.FirebaseFirestore>(() => firebaseModule.firestore);
     gh.lazySingleton<_i228.AppDatabase>(() => _i228.AppDatabase());
     gh.lazySingleton<_i187.RemoteDataSource>(() => _i187.RemoteDataSource());
+    gh.lazySingleton<_i694.GemmaService>(() => _i694.GemmaService());
+    gh.lazySingleton<_i477.LessonAiService>(() => _i477.LessonAiService());
+    gh.lazySingleton<_i461.MediaService>(() => _i461.MediaService());
+    gh.lazySingleton<_i683.TeacherSttService>(() => _i683.TeacherSttService());
+    gh.lazySingleton<_i701.TeacherTtsService>(() => _i701.TeacherTtsService());
     gh.lazySingleton<_i562.EducationRepository>(
       () => _i562.EducationRepository(gh<_i228.AppDatabase>()),
+    );
+    gh.lazySingleton<_i666.SmartTeacherService>(
+      () => _i666.SmartTeacherService(gh<_i694.GemmaService>()),
+    );
+    gh.lazySingleton<_i472.ModelInstallationCubit>(
+      () => _i472.ModelInstallationCubit(gh<_i694.GemmaService>()),
+    );
+    gh.factory<_i705.TeacherExplanationCubit>(
+      () => _i705.TeacherExplanationCubit(
+        gh<_i477.LessonAiService>(),
+        gh<_i228.AppDatabase>(),
+      ),
     );
     gh.lazySingleton<_i898.FirebaseRemoteDataSource>(
       () => _i898.FirebaseRemoteDataSource(gh<_i974.FirebaseFirestore>()),
@@ -54,6 +88,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i898.FirebaseRemoteDataSource>(),
       ),
     );
+    gh.factory<_i515.SmartTeacherCubit>(
+      () => _i515.SmartTeacherCubit(gh<_i666.SmartTeacherService>()),
+    );
     gh.lazySingleton<_i388.SyncManager>(
       () => _i388.SyncManager(
         gh<_i562.EducationRepository>(),
@@ -63,6 +100,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i694.DashboardCubit>(
       () => _i694.DashboardCubit(
+        gh<_i562.EducationRepository>(),
+        gh<_i388.SyncManager>(),
+      ),
+    );
+    gh.factory<_i239.EnhancedDashboardCubit>(
+      () => _i239.EnhancedDashboardCubit(
         gh<_i562.EducationRepository>(),
         gh<_i388.SyncManager>(),
       ),

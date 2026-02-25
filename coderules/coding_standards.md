@@ -11,6 +11,8 @@
 - **Strictly follow** the user's `analysis_options.yaml`
 - **All lint rules** must be satisfied
 - **No warnings** or errors allowed
+- **Modern APIs:** Use `.withValues(alpha: ...)` instead of `.withOpacity(...)` (Flutter 3.24+)
+- **Constructor Order:** Always place constructor declarations before non-constructor members (`sort_constructors_first`)
 
 ## 2. Logging Requirements (MANDATORY)
 
@@ -211,7 +213,13 @@ try {
 - **Union types** for state and result objects
 - **CopyWith** functionality for updates
 
-## 13. Import Organization
+## 15. AI Service Implementation
+When implementing AI-driven features (e.g., Gemma):
+
+- **Modern API Usage:** Use high-level facade classes (e.g., `FlutterGemma`) instead of lower-level plugin instances.
+- **Resource Management:** Always close AI sessions (`InferenceModelSession`) using `finally` blocks to prevent memory leaks.
+- **Explicit Initialization:** Models must be explicitly initialized (e.g., `await FlutterGemma.initialize()`) before any interaction.
+- **Async Safety:** AI generation should be handled in a state-managed way (Cubit/Bloc) to handle long-running operations and potential errors.
 
 ### Import Order
 ```dart

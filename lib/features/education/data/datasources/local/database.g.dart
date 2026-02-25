@@ -1743,6 +1743,407 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
   }
 }
 
+class $QaHistoryItemsTable extends QaHistoryItems
+    with TableInfo<$QaHistoryItemsTable, QaHistoryItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QaHistoryItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _lessonIdMeta = const VerificationMeta(
+    'lessonId',
+  );
+  @override
+  late final GeneratedColumn<String> lessonId = GeneratedColumn<String>(
+    'lesson_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _questionMeta = const VerificationMeta(
+    'question',
+  );
+  @override
+  late final GeneratedColumn<String> question = GeneratedColumn<String>(
+    'question',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _answerMeta = const VerificationMeta('answer');
+  @override
+  late final GeneratedColumn<String> answer = GeneratedColumn<String>(
+    'answer',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isGreetingMeta = const VerificationMeta(
+    'isGreeting',
+  );
+  @override
+  late final GeneratedColumn<bool> isGreeting = GeneratedColumn<bool>(
+    'is_greeting',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_greeting" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    lessonId,
+    question,
+    answer,
+    isGreeting,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'qa_history_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QaHistoryItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('lesson_id')) {
+      context.handle(
+        _lessonIdMeta,
+        lessonId.isAcceptableOrUnknown(data['lesson_id']!, _lessonIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lessonIdMeta);
+    }
+    if (data.containsKey('question')) {
+      context.handle(
+        _questionMeta,
+        question.isAcceptableOrUnknown(data['question']!, _questionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_questionMeta);
+    }
+    if (data.containsKey('answer')) {
+      context.handle(
+        _answerMeta,
+        answer.isAcceptableOrUnknown(data['answer']!, _answerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_answerMeta);
+    }
+    if (data.containsKey('is_greeting')) {
+      context.handle(
+        _isGreetingMeta,
+        isGreeting.isAcceptableOrUnknown(data['is_greeting']!, _isGreetingMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  QaHistoryItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QaHistoryItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      lessonId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lesson_id'],
+      )!,
+      question: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}question'],
+      )!,
+      answer: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}answer'],
+      )!,
+      isGreeting: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_greeting'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QaHistoryItemsTable createAlias(String alias) {
+    return $QaHistoryItemsTable(attachedDatabase, alias);
+  }
+}
+
+class QaHistoryItem extends DataClass implements Insertable<QaHistoryItem> {
+  final int id;
+  final String lessonId;
+  final String question;
+  final String answer;
+  final bool isGreeting;
+  final DateTime createdAt;
+  const QaHistoryItem({
+    required this.id,
+    required this.lessonId,
+    required this.question,
+    required this.answer,
+    required this.isGreeting,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['lesson_id'] = Variable<String>(lessonId);
+    map['question'] = Variable<String>(question);
+    map['answer'] = Variable<String>(answer);
+    map['is_greeting'] = Variable<bool>(isGreeting);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  QaHistoryItemsCompanion toCompanion(bool nullToAbsent) {
+    return QaHistoryItemsCompanion(
+      id: Value(id),
+      lessonId: Value(lessonId),
+      question: Value(question),
+      answer: Value(answer),
+      isGreeting: Value(isGreeting),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory QaHistoryItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QaHistoryItem(
+      id: serializer.fromJson<int>(json['id']),
+      lessonId: serializer.fromJson<String>(json['lessonId']),
+      question: serializer.fromJson<String>(json['question']),
+      answer: serializer.fromJson<String>(json['answer']),
+      isGreeting: serializer.fromJson<bool>(json['isGreeting']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'lessonId': serializer.toJson<String>(lessonId),
+      'question': serializer.toJson<String>(question),
+      'answer': serializer.toJson<String>(answer),
+      'isGreeting': serializer.toJson<bool>(isGreeting),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  QaHistoryItem copyWith({
+    int? id,
+    String? lessonId,
+    String? question,
+    String? answer,
+    bool? isGreeting,
+    DateTime? createdAt,
+  }) => QaHistoryItem(
+    id: id ?? this.id,
+    lessonId: lessonId ?? this.lessonId,
+    question: question ?? this.question,
+    answer: answer ?? this.answer,
+    isGreeting: isGreeting ?? this.isGreeting,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  QaHistoryItem copyWithCompanion(QaHistoryItemsCompanion data) {
+    return QaHistoryItem(
+      id: data.id.present ? data.id.value : this.id,
+      lessonId: data.lessonId.present ? data.lessonId.value : this.lessonId,
+      question: data.question.present ? data.question.value : this.question,
+      answer: data.answer.present ? data.answer.value : this.answer,
+      isGreeting: data.isGreeting.present
+          ? data.isGreeting.value
+          : this.isGreeting,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QaHistoryItem(')
+          ..write('id: $id, ')
+          ..write('lessonId: $lessonId, ')
+          ..write('question: $question, ')
+          ..write('answer: $answer, ')
+          ..write('isGreeting: $isGreeting, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, lessonId, question, answer, isGreeting, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QaHistoryItem &&
+          other.id == this.id &&
+          other.lessonId == this.lessonId &&
+          other.question == this.question &&
+          other.answer == this.answer &&
+          other.isGreeting == this.isGreeting &&
+          other.createdAt == this.createdAt);
+}
+
+class QaHistoryItemsCompanion extends UpdateCompanion<QaHistoryItem> {
+  final Value<int> id;
+  final Value<String> lessonId;
+  final Value<String> question;
+  final Value<String> answer;
+  final Value<bool> isGreeting;
+  final Value<DateTime> createdAt;
+  const QaHistoryItemsCompanion({
+    this.id = const Value.absent(),
+    this.lessonId = const Value.absent(),
+    this.question = const Value.absent(),
+    this.answer = const Value.absent(),
+    this.isGreeting = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  QaHistoryItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required String lessonId,
+    required String question,
+    required String answer,
+    this.isGreeting = const Value.absent(),
+    required DateTime createdAt,
+  }) : lessonId = Value(lessonId),
+       question = Value(question),
+       answer = Value(answer),
+       createdAt = Value(createdAt);
+  static Insertable<QaHistoryItem> custom({
+    Expression<int>? id,
+    Expression<String>? lessonId,
+    Expression<String>? question,
+    Expression<String>? answer,
+    Expression<bool>? isGreeting,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (lessonId != null) 'lesson_id': lessonId,
+      if (question != null) 'question': question,
+      if (answer != null) 'answer': answer,
+      if (isGreeting != null) 'is_greeting': isGreeting,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  QaHistoryItemsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? lessonId,
+    Value<String>? question,
+    Value<String>? answer,
+    Value<bool>? isGreeting,
+    Value<DateTime>? createdAt,
+  }) {
+    return QaHistoryItemsCompanion(
+      id: id ?? this.id,
+      lessonId: lessonId ?? this.lessonId,
+      question: question ?? this.question,
+      answer: answer ?? this.answer,
+      isGreeting: isGreeting ?? this.isGreeting,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (lessonId.present) {
+      map['lesson_id'] = Variable<String>(lessonId.value);
+    }
+    if (question.present) {
+      map['question'] = Variable<String>(question.value);
+    }
+    if (answer.present) {
+      map['answer'] = Variable<String>(answer.value);
+    }
+    if (isGreeting.present) {
+      map['is_greeting'] = Variable<bool>(isGreeting.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QaHistoryItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('lessonId: $lessonId, ')
+          ..write('question: $question, ')
+          ..write('answer: $answer, ')
+          ..write('isGreeting: $isGreeting, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1750,6 +2151,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LessonsTable lessons = $LessonsTable(this);
   late final $ProgressesTable progresses = $ProgressesTable(this);
   late final $SyncQueueItemsTable syncQueueItems = $SyncQueueItemsTable(this);
+  late final $QaHistoryItemsTable qaHistoryItems = $QaHistoryItemsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1759,6 +2161,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     lessons,
     progresses,
     syncQueueItems,
+    qaHistoryItems,
   ];
 }
 
@@ -3078,6 +3481,223 @@ typedef $$SyncQueueItemsTableProcessedTableManager =
       SyncQueueItem,
       PrefetchHooks Function()
     >;
+typedef $$QaHistoryItemsTableCreateCompanionBuilder =
+    QaHistoryItemsCompanion Function({
+      Value<int> id,
+      required String lessonId,
+      required String question,
+      required String answer,
+      Value<bool> isGreeting,
+      required DateTime createdAt,
+    });
+typedef $$QaHistoryItemsTableUpdateCompanionBuilder =
+    QaHistoryItemsCompanion Function({
+      Value<int> id,
+      Value<String> lessonId,
+      Value<String> question,
+      Value<String> answer,
+      Value<bool> isGreeting,
+      Value<DateTime> createdAt,
+    });
+
+class $$QaHistoryItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $QaHistoryItemsTable> {
+  $$QaHistoryItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lessonId => $composableBuilder(
+    column: $table.lessonId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get question => $composableBuilder(
+    column: $table.question,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get answer => $composableBuilder(
+    column: $table.answer,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isGreeting => $composableBuilder(
+    column: $table.isGreeting,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$QaHistoryItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $QaHistoryItemsTable> {
+  $$QaHistoryItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lessonId => $composableBuilder(
+    column: $table.lessonId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get question => $composableBuilder(
+    column: $table.question,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get answer => $composableBuilder(
+    column: $table.answer,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isGreeting => $composableBuilder(
+    column: $table.isGreeting,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$QaHistoryItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QaHistoryItemsTable> {
+  $$QaHistoryItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get lessonId =>
+      $composableBuilder(column: $table.lessonId, builder: (column) => column);
+
+  GeneratedColumn<String> get question =>
+      $composableBuilder(column: $table.question, builder: (column) => column);
+
+  GeneratedColumn<String> get answer =>
+      $composableBuilder(column: $table.answer, builder: (column) => column);
+
+  GeneratedColumn<bool> get isGreeting => $composableBuilder(
+    column: $table.isGreeting,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$QaHistoryItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QaHistoryItemsTable,
+          QaHistoryItem,
+          $$QaHistoryItemsTableFilterComposer,
+          $$QaHistoryItemsTableOrderingComposer,
+          $$QaHistoryItemsTableAnnotationComposer,
+          $$QaHistoryItemsTableCreateCompanionBuilder,
+          $$QaHistoryItemsTableUpdateCompanionBuilder,
+          (
+            QaHistoryItem,
+            BaseReferences<_$AppDatabase, $QaHistoryItemsTable, QaHistoryItem>,
+          ),
+          QaHistoryItem,
+          PrefetchHooks Function()
+        > {
+  $$QaHistoryItemsTableTableManager(
+    _$AppDatabase db,
+    $QaHistoryItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QaHistoryItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QaHistoryItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QaHistoryItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> lessonId = const Value.absent(),
+                Value<String> question = const Value.absent(),
+                Value<String> answer = const Value.absent(),
+                Value<bool> isGreeting = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => QaHistoryItemsCompanion(
+                id: id,
+                lessonId: lessonId,
+                question: question,
+                answer: answer,
+                isGreeting: isGreeting,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String lessonId,
+                required String question,
+                required String answer,
+                Value<bool> isGreeting = const Value.absent(),
+                required DateTime createdAt,
+              }) => QaHistoryItemsCompanion.insert(
+                id: id,
+                lessonId: lessonId,
+                question: question,
+                answer: answer,
+                isGreeting: isGreeting,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$QaHistoryItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QaHistoryItemsTable,
+      QaHistoryItem,
+      $$QaHistoryItemsTableFilterComposer,
+      $$QaHistoryItemsTableOrderingComposer,
+      $$QaHistoryItemsTableAnnotationComposer,
+      $$QaHistoryItemsTableCreateCompanionBuilder,
+      $$QaHistoryItemsTableUpdateCompanionBuilder,
+      (
+        QaHistoryItem,
+        BaseReferences<_$AppDatabase, $QaHistoryItemsTable, QaHistoryItem>,
+      ),
+      QaHistoryItem,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3090,4 +3710,6 @@ class $AppDatabaseManager {
       $$ProgressesTableTableManager(_db, _db.progresses);
   $$SyncQueueItemsTableTableManager get syncQueueItems =>
       $$SyncQueueItemsTableTableManager(_db, _db.syncQueueItems);
+  $$QaHistoryItemsTableTableManager get qaHistoryItems =>
+      $$QaHistoryItemsTableTableManager(_db, _db.qaHistoryItems);
 }

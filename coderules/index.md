@@ -103,6 +103,7 @@ Run `dart run build_runner build --delete-conflicting-outputs` after:
 - ❌ Hardcoded strings (use `TextManager`)
 - ❌ `EdgeInsets.only(left/right)` - use `EdgeInsetsDirectional`
 - ❌ Manual DI registration - use `injectable`
+- ❌ `withOpacity()` - use `.withValues(alpha: ...)` (Flutter 3.24+)
 
 ### Required Patterns
 - ✅ `AppLogger` with correct `LogTags`
@@ -111,6 +112,8 @@ Run `dart run build_runner build --delete-conflicting-outputs` after:
 - ✅ `TextManager` with `LocaleKeys`
 - ✅ `EdgeInsetsDirectional` for asymmetric padding
 - ✅ `@injectable` annotations for DI
+- ✅ `sort_constructors_first` - constructors must be the first declaration
+- ✅ **Zero `flutter analyze` issues** before every commit
 
 ## 📚 Resources
 

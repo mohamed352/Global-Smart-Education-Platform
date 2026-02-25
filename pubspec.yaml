@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.1+2
+version: 1.1.0+3
 
 environment:
   sdk: ^3.11.0
@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
   cupertino_icons: ^1.0.8
 
@@ -62,6 +65,18 @@ dependencies:
   # Video Playback
   video_player: ^2.9.2
 
+  # Image & Media Handling
+  image_picker: ^1.0.4
+
+  # Text-to-Speech
+  flutter_tts: ^4.2.5
+
+  # Speech-to-Text (offline-first)
+  speech_to_text: ^7.0.0
+
+  # AI / Gemma
+  flutter_gemma: ^0.12.4
+
   # Firebase
   firebase_core: ^4.4.0
   cloud_firestore: ^6.1.2
@@ -90,6 +105,7 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/audio/

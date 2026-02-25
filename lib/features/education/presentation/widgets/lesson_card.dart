@@ -23,14 +23,19 @@ class LessonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color statusColor;
+    final String displayStatus;
     if (syncStatus == SyncStatus.pending.name) {
       statusColor = Colors.orange;
+      displayStatus = 'قيد الانتظار';
     } else if (syncStatus == SyncStatus.failed.name) {
       statusColor = Colors.red;
+      displayStatus = 'فشل المزامنة';
     } else if (syncStatus == SyncStatus.synced.name) {
       statusColor = Colors.green;
+      displayStatus = 'تمت المزامنة';
     } else {
       statusColor = Colors.grey;
+      displayStatus = 'غير معروف';
     }
 
     return Card(
@@ -61,11 +66,10 @@ class LessonCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    syncStatus,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: statusColor),
+                    displayStatus,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: statusColor),
                   ),
                 ],
               ),
@@ -75,11 +79,10 @@ class LessonCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               Text(
-                '${lesson.durationMinutes} min',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: Colors.grey),
+                'مدة الدرس: ${lesson.durationMinutes} دقيقة',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
               const SizedBox(height: 12),
               Row(
@@ -106,11 +109,11 @@ class LessonCard extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: progressPercent >= 100 ? null : onUpdateOffline,
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Update Progress Offline'),
+                    label: const Text('تحديث التقدم'),
                   ),
                   OutlinedButton(
                     onPressed: onSimulateConflict,
-                    child: const Text('Simulate Remote Conflict'),
+                    child: const Text('محاكاة تعارض'),
                   ),
                 ],
               ),

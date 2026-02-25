@@ -14,7 +14,7 @@ class UserCard extends StatelessWidget {
         title: Text(user.name),
         subtitle: Text(user.email),
         trailing: Text(
-          'Updated: ${user.updatedAt.hour}:${user.updatedAt.minute}',
+          'آخر تحديث: ${user.updatedAt.hour}:${user.updatedAt.minute}',
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ),

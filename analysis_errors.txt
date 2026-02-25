@@ -1,0 +1,10 @@
+Analyzing Global-Smart-Education-Platform...                    
+
+  error - The method 'init' isn't defined for the type 'FlutterGemmaPlugin' - lib\features\education\data\services\gemma_service.dart:15:41 - undefined_method
+  error - The method 'getResponse' isn't defined for the type 'FlutterGemmaPlugin' - lib\features\education\data\services\gemma_service.dart:29:58 - undefined_method
+   info - Unnecessary use of double quotes - lib\features\education\data\services\gemma_service.dart:30:17 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\education\data\services\gemma_service.dart:36:14 - prefer_single_quotes
+   info - Constructor declarations should be before non-constructor declarations - lib\features\education\presentation\cubit\teacher_explanation_cubit.dart:13:3 - sort_constructors_first
+   info - Use of an async 'dart:io' method - lib\features\education\presentation\widgets\lesson_content.dart:54:19 - avoid_slow_async_io
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\education\presentation\widgets\teacher_explanation_widget.dart:28:33 - deprecated_member_use
+

@@ -60,9 +60,21 @@ class SyncQueueItems extends Table {
   DateTimeColumn get createdAt => dateTime()();
 }
 
+/// Q&A history for AI teacher — stores all student questions and AI answers per lesson
+class QaHistoryItems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get lessonId => text()();
+  TextColumn get question => text()();
+  TextColumn get answer => text()();
+  BoolColumn get isGreeting => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+}
+
 // ─── Database ───
 
-@DriftDatabase(tables: [Users, Lessons, Progresses, SyncQueueItems])
+@DriftDatabase(
+  tables: [Users, Lessons, Progresses, SyncQueueItems, QaHistoryItems],
+)
 @LazySingleton()
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -70,7 +82,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -82,6 +94,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(lessons, lessons.videoPath);
+      }
+      if (from < 4) {
+        await m.createTable(qaHistoryItems);
       }
     },
   );
@@ -151,6 +166,17 @@ class AppDatabase extends _$AppDatabase {
       (update(progresses)..where((p) => p.id.equals(progressId))).write(
         ProgressesCompanion(syncStatus: Value(status)),
       );
+
+  // ── Q&A History Queries ──
+
+  Future<List<QaHistoryItem>> getQaHistoryForLesson(String lessonId) =>
+      (select(qaHistoryItems)
+            ..where((q) => q.lessonId.equals(lessonId))
+            ..orderBy([(q) => OrderingTerm.asc(q.createdAt)]))
+          .get();
+
+  Future<int> insertQaItem(QaHistoryItemsCompanion item) =>
+      into(qaHistoryItems).insert(item);
 }
 
 LazyDatabase _openConnection() {

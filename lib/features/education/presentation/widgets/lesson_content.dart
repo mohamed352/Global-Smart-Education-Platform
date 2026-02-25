@@ -8,6 +8,7 @@ import 'package:global_smart_education_platform/features/education/data/datasour
 import 'package:global_smart_education_platform/features/education/presentation/cubit/lesson_cubit.dart';
 import 'package:global_smart_education_platform/features/education/presentation/widgets/lesson_audio_player.dart';
 import 'package:global_smart_education_platform/features/education/presentation/widgets/lesson_text_view.dart';
+import 'package:global_smart_education_platform/features/education/presentation/widgets/teacher_explanation_widget.dart';
 
 class LessonContent extends StatefulWidget {
   const LessonContent({
@@ -50,7 +51,7 @@ class _LessonContentState extends State<LessonContent> {
       bool isLocalFile = false;
       if (path.contains(':\\') || path.contains(':/')) {
         final File file = File(path);
-        if (await file.exists()) {
+        if (file.existsSync()) {
           isLocalFile = true;
         }
       }
@@ -90,7 +91,16 @@ class _LessonContentState extends State<LessonContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.lesson.title)),
+      appBar: AppBar(
+        title: Text(widget.lesson.title),
+        actions: [
+          IconButton(
+            onPressed: () => TeacherExplanationWidget.show(context, widget.lesson.content),
+            icon: const Icon(Icons.psychology_alt),
+            tooltip: 'Explain with AI',
+          ),
+        ],
+      ),
       body: Column(
         children: <Widget>[
           Expanded(

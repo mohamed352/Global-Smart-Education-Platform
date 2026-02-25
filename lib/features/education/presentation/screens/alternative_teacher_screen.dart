@@ -1,22 +1,27 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 import 'package:global_smart_education_platform/core/di/injection.dart';
 import 'package:global_smart_education_platform/features/education/data/datasources/local/database.dart';
 import 'package:global_smart_education_platform/features/education/data/repositories/education_repository.dart';
+import 'package:global_smart_education_platform/features/education/presentation/widgets/teacher_explanation_widget.dart';
 import 'package:video_player/video_player.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:global_smart_education_platform/features/education/presentation/cubit/teacher_explanation_cubit.dart';
 
 class AlternativeTeacherScreen extends StatefulWidget {
   const AlternativeTeacherScreen({super.key});
 
   @override
-  State<AlternativeTeacherScreen> createState() => _AlternativeTeacherScreenState();
+  State<AlternativeTeacherScreen> createState() =>
+      _AlternativeTeacherScreenState();
 }
 
 class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
   final EducationRepository _repository = getIt<EducationRepository>();
   final AudioPlayer _audioPlayer = AudioPlayer();
   VideoPlayerController? _videoController;
-  
+
   List<Lesson> _lessons = [];
   int _currentIndex = 0;
   bool _isLoading = true;
@@ -45,28 +50,29 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
     // Reset players
     await _audioPlayer.stop();
     setState(() => _isAudioPlaying = false);
-    
+
     if (_videoController != null) {
       await _videoController!.dispose();
       _videoController = null;
     }
 
     final lesson = _lessons[_currentIndex];
-    
+
     // Initialize Video if available
     if (lesson.videoPath.isNotEmpty) {
       if (lesson.videoPath.startsWith('http')) {
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(lesson.videoPath));
+        _videoController = VideoPlayerController.networkUrl(
+          Uri.parse(lesson.videoPath),
+        );
       } else {
-        // Assume asset or local file
         _videoController = VideoPlayerController.asset(lesson.videoPath);
       }
-      
+
       try {
         await _videoController!.initialize();
         setState(() {});
       } catch (e) {
-        debugPrint('Error initializing video: $e');
+        log.e('Error initializing video', tag: LogTags.error, error: e);
       }
     }
   }
@@ -108,14 +114,19 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // AI Teacher is ALWAYS ready — no model download gate
+    return _buildContent(context);
+  }
+
+  Widget _buildContent(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_lessons.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Alternative Teacher')),
-        body: const Center(child: Text('No lessons found.')),
+        appBar: AppBar(title: const Text('المعلم البديل')),
+        body: const Center(child: Text('لا توجد دروس حالياً.')),
       );
     }
 
@@ -123,7 +134,7 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alternative Teacher'),
+        title: const Text('المعلم الذكي'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -132,29 +143,123 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Prominent AI Teacher Card — always ready
+              Card(
+                elevation: 4,
+                shadowColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primaryContainer,
+                        Theme.of(context).colorScheme.surface,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        child: const Icon(
+                          Icons.psychology,
+                          size: 35,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'عندك أسئلة عن الدرس ده؟',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'المعلم الذكي جاهز يساعدك! ✅',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Colors.green.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Initialize cubit with lesson data before opening chat
+                          final cubit = context.read<TeacherExplanationCubit>();
+                          cubit.initializeForLesson(
+                            lessonId: lesson.id,
+                            lessonTitle: lesson.title,
+                            lessonContent: lesson.content,
+                          );
+                          TeacherExplanationWidget.show(
+                            context,
+                            lesson.content,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('دردشة'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               // Lesson Title
               Text(
                 lesson.title,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               const SizedBox(height: 16),
-              
-              // Video Player Placeholder or Actual Player
-              if (lesson.videoPath.isNotEmpty && _videoController != null && _videoController!.value.isInitialized)
+
+              // Video Player
+              if (lesson.videoPath.isNotEmpty &&
+                  _videoController != null &&
+                  _videoController!.value.isInitialized)
                 AspectRatio(
                   aspectRatio: _videoController!.value.aspectRatio,
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
                       VideoPlayer(_videoController!),
-                      VideoProgressIndicator(_videoController!, allowScrubbing: true),
+                      VideoProgressIndicator(
+                        _videoController!,
+                        allowScrubbing: true,
+                      ),
                       Center(
                         child: IconButton(
                           icon: Icon(
-                            _videoController!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                            _videoController!.value.isPlaying
+                                ? Icons.pause
+                                : Icons.play_arrow,
                             size: 50,
                             color: Colors.white70,
                           ),
@@ -186,13 +291,17 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
                   elevation: 2,
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.secondaryContainer,
                       child: Icon(
                         _isAudioPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
                       ),
                     ),
-                    title: const Text('Audio Explanation'),
+                    title: const Text('شرح صوتي للدرس'),
                     subtitle: Text(lesson.audioPath),
                     onTap: _toggleAudio,
                   ),
@@ -202,23 +311,25 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
 
               // Lesson Text Content
               Text(
-                'Lesson Content',
+                'محتوى الدرس',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const Divider(),
               Text(
                 lesson.content,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(height: 1.5),
               ),
-              
-              const SizedBox(height: 100), // Space for bottom button
+
+              const SizedBox(height: 100),
             ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _nextLesson,
-        label: const Text('Next Lesson'),
+        label: const Text('الدرس التالي'),
         icon: const Icon(Icons.navigate_next),
       ),
     );
