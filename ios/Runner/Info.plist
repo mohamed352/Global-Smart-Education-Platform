@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>تمكين التعرف على الكلام لسؤال المعلم الذكي بصوتك.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>تمكين الميكروفون لتسجيل سؤالك الصوتي للمعلم الذكي.</string>
 </dict>
 </plist>
