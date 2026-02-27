@@ -119,7 +119,6 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
                                             ),
                                             const SizedBox(width: 8),
                                             Row(
-                                              mainAxisSize: MainAxisSize.min,
                                               children: List.generate(
                                                 3,
                                                 (i) => _AnimatedDot(
