@@ -5,8 +5,7 @@ import 'package:global_smart_education_platform/features/education/presentation/
 import 'package:global_smart_education_platform/core/di/injection.dart';
 
 /// واجهة محسّنة للمعلم الذكي
-class EnhancedTeacherExplanationWidget
-    extends StatefulWidget {
+class EnhancedTeacherExplanationWidget extends StatefulWidget {
   const EnhancedTeacherExplanationWidget({
     super.key,
     required this.lessonContent,
@@ -23,9 +22,7 @@ class EnhancedTeacherExplanationWidget
       context: context,
       isScrollControlled: true,
       builder: (context) =>
-          EnhancedTeacherExplanationWidget(
-            lessonContent: content,
-          ),
+          EnhancedTeacherExplanationWidget(lessonContent: content),
     );
   }
 }
@@ -71,17 +68,14 @@ class _EnhancedTeacherExplanationWidgetState
                   horizontal: 20,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
                 ),
                 child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'المعلم الذكي',
@@ -92,12 +86,8 @@ class _EnhancedTeacherExplanationWidgetState
                       ),
                     ),
                     IconButton(
-                      onPressed: () =>
-                          Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                      ),
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.white),
                     ),
                   ],
                 ),
@@ -113,34 +103,26 @@ class _EnhancedTeacherExplanationWidgetState
                         label: 'شرح مفصل',
                         icon: Icons.description,
                         onTap: () =>
-                            _cubit.getDetailedExplanation(
-                              widget.lessonContent,
-                            ),
+                            _cubit.getDetailedExplanation(widget.lessonContent),
                       ),
                       const SizedBox(width: 12),
                       _buildOptionButton(
                         label: 'ملخص',
                         icon: Icons.summarize,
-                        onTap: () => _cubit.getSummary(
-                          widget.lessonContent,
-                        ),
+                        onTap: () => _cubit.getSummary(widget.lessonContent),
                       ),
                       const SizedBox(width: 12),
                       _buildOptionButton(
                         label: 'أسئلة',
                         icon: Icons.quiz,
                         onTap: () =>
-                            _cubit.generateQuestions(
-                              widget.lessonContent,
-                            ),
+                            _cubit.generateQuestions(widget.lessonContent),
                       ),
                       const SizedBox(width: 12),
                       _buildOptionButton(
                         label: 'نصائح',
                         icon: Icons.lightbulb,
-                        onTap: () => _cubit.getStudyTips(
-                          'الموضوع الحالي',
-                        ),
+                        onTap: () => _cubit.getStudyTips('الموضوع الحالي'),
                       ),
                     ],
                   ),
@@ -148,66 +130,35 @@ class _EnhancedTeacherExplanationWidgetState
               ),
               // Content
               Expanded(
-                child:
-                    BlocBuilder<
-                      SmartTeacherCubit,
-                      SmartTeacherState
-                    >(
-                      builder: (context, state) {
-                        if (state is SmartTeacherInitial) {
-                          return _buildEmptyState();
-                        } else if (state
-                            is SmartTeacherLoading) {
-                          return const Center(
-                            child:
-                                CircularProgressIndicator(),
-                          );
-                        } else if (state
-                            is SmartTeacherExplanation) {
-                          return _buildContentView(
-                            state.text,
-                          );
-                        } else if (state
-                            is SmartTeacherQuestions) {
-                          return _buildContentView(
-                            state.questions,
-                          );
-                        } else if (state
-                            is SmartTeacherAnswer) {
-                          return _buildContentView(
-                            state.answer,
-                          );
-                        } else if (state
-                            is SmartTeacherSpeaking) {
-                          return _buildSpeakingState();
-                        } else if (state
-                            is SmartTeacherPaused) {
-                          return _buildPausedState();
-                        } else if (state
-                            is SmartTeacherFeedback) {
-                          return _buildContentView(
-                            state.feedback,
-                          );
-                        } else if (state
-                            is SmartTeacherStudyTips) {
-                          return _buildContentView(
-                            state.tips,
-                          );
-                        } else if (state
-                            is SmartTeacherError) {
-                          return _buildErrorView(
-                            state.message,
-                          );
-                        }
-                        return _buildEmptyState();
-                      },
-                    ),
+                child: BlocBuilder<SmartTeacherCubit, SmartTeacherState>(
+                  builder: (context, state) {
+                    if (state is SmartTeacherInitial) {
+                      return _buildEmptyState();
+                    } else if (state is SmartTeacherLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is SmartTeacherExplanation) {
+                      return _buildContentView(state.text);
+                    } else if (state is SmartTeacherQuestions) {
+                      return _buildContentView(state.questions);
+                    } else if (state is SmartTeacherAnswer) {
+                      return _buildContentView(state.answer);
+                    } else if (state is SmartTeacherSpeaking) {
+                      return _buildSpeakingState();
+                    } else if (state is SmartTeacherPaused) {
+                      return _buildPausedState();
+                    } else if (state is SmartTeacherFeedback) {
+                      return _buildContentView(state.feedback);
+                    } else if (state is SmartTeacherStudyTips) {
+                      return _buildContentView(state.tips);
+                    } else if (state is SmartTeacherError) {
+                      return _buildErrorView(state.message);
+                    }
+                    return _buildEmptyState();
+                  },
+                ),
               ),
               // Audio Controls
-              BlocBuilder<
-                SmartTeacherCubit,
-                SmartTeacherState
-              >(
+              BlocBuilder<SmartTeacherCubit, SmartTeacherState>(
                 builder: (context, state) =>
                     _buildAudioControls(context, state),
               ),
@@ -228,13 +179,8 @@ class _EnhancedTeacherExplanationWidgetState
       icon: Icon(icon),
       label: Text(label),
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -262,9 +208,7 @@ class _EnhancedTeacherExplanationWidgetState
           Icon(
             Icons.psychology_alt,
             size: 64,
-            color: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -278,22 +222,15 @@ class _EnhancedTeacherExplanationWidgetState
   }
 
   Widget _buildSpeakingState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.volume_up,
-            size: 64,
-            color: Colors.green,
-          ),
-          const SizedBox(height: 16),
-          const Text(
+          Icon(Icons.volume_up, size: 64, color: Colors.green),
+          SizedBox(height: 16),
+          Text(
             'جاري التحدث...',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -301,22 +238,15 @@ class _EnhancedTeacherExplanationWidgetState
   }
 
   Widget _buildPausedState() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.pause_circle,
-            size: 64,
-            color: Colors.orange,
-          ),
-          const SizedBox(height: 16),
-          const Text(
+          Icon(Icons.pause_circle, size: 64, color: Colors.orange),
+          SizedBox(height: 16),
+          Text(
             'مؤقف مؤقتاً',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -350,10 +280,7 @@ class _EnhancedTeacherExplanationWidgetState
     );
   }
 
-  Widget _buildAudioControls(
-    BuildContext context,
-    SmartTeacherState state,
-  ) {
+  Widget _buildAudioControls(BuildContext context, SmartTeacherState state) {
     final isCurrentlyAvailable =
         state is SmartTeacherExplanation ||
         state is SmartTeacherAnswer ||
@@ -365,11 +292,7 @@ class _EnhancedTeacherExplanationWidgetState
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: Theme.of(
-              context,
-            ).colorScheme.outlineVariant,
-          ),
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
       ),
       child: Row(
@@ -384,18 +307,12 @@ class _EnhancedTeacherExplanationWidgetState
                       _isPlaying = true;
                       setState(() {});
                     }
-                  : () => _getStringFromState(state).then((
-                      text,
-                    ) {
+                  : () => _getStringFromState(state).then((text) {
                       _cubit.speak(text);
                       setState(() => _isPlaying = true);
                     }),
-              icon: Icon(
-                _isPlaying ? Icons.stop : Icons.play_arrow,
-              ),
-              label: Text(
-                _isPlaying ? 'إيقاف' : 'تشغيل الصوت',
-              ),
+              icon: Icon(_isPlaying ? Icons.stop : Icons.play_arrow),
+              label: Text(_isPlaying ? 'إيقاف' : 'تشغيل الصوت'),
             ),
           if (isCurrentlyAvailable && _isPlaying)
             IconButton(
@@ -408,15 +325,15 @@ class _EnhancedTeacherExplanationWidgetState
     );
   }
 
-  Future<String> _getStringFromState(
-    SmartTeacherState state,
-  ) async {
+  Future<String> _getStringFromState(SmartTeacherState state) async {
     if (state is SmartTeacherExplanation) return state.text;
-    if (state is SmartTeacherQuestions)
+    if (state is SmartTeacherQuestions) {
       return state.questions;
+    }
     if (state is SmartTeacherAnswer) return state.answer;
-    if (state is SmartTeacherFeedback)
+    if (state is SmartTeacherFeedback) {
       return state.feedback;
+    }
     if (state is SmartTeacherStudyTips) return state.tips;
     return '';
   }

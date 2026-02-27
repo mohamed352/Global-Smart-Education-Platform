@@ -974,6 +974,28 @@ class $ProgressesTable extends Progresses
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _scoreMeta = const VerificationMeta('score');
+  @override
+  late final GeneratedColumn<int> score = GeneratedColumn<int>(
+    'score',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _masteryLevelMeta = const VerificationMeta(
+    'masteryLevel',
+  );
+  @override
+  late final GeneratedColumn<String> masteryLevel = GeneratedColumn<String>(
+    'mastery_level',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('beginner'),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -1003,6 +1025,8 @@ class $ProgressesTable extends Progresses
     userId,
     lessonId,
     progressPercent,
+    score,
+    masteryLevel,
     updatedAt,
     syncStatus,
   ];
@@ -1048,6 +1072,21 @@ class $ProgressesTable extends Progresses
         ),
       );
     }
+    if (data.containsKey('score')) {
+      context.handle(
+        _scoreMeta,
+        score.isAcceptableOrUnknown(data['score']!, _scoreMeta),
+      );
+    }
+    if (data.containsKey('mastery_level')) {
+      context.handle(
+        _masteryLevelMeta,
+        masteryLevel.isAcceptableOrUnknown(
+          data['mastery_level']!,
+          _masteryLevelMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -1087,6 +1126,14 @@ class $ProgressesTable extends Progresses
         DriftSqlType.int,
         data['${effectivePrefix}progress_percent'],
       )!,
+      score: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}score'],
+      )!,
+      masteryLevel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mastery_level'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -1109,6 +1156,8 @@ class Progress extends DataClass implements Insertable<Progress> {
   final String userId;
   final String lessonId;
   final int progressPercent;
+  final int score;
+  final String masteryLevel;
   final DateTime updatedAt;
   final String syncStatus;
   const Progress({
@@ -1116,6 +1165,8 @@ class Progress extends DataClass implements Insertable<Progress> {
     required this.userId,
     required this.lessonId,
     required this.progressPercent,
+    required this.score,
+    required this.masteryLevel,
     required this.updatedAt,
     required this.syncStatus,
   });
@@ -1126,6 +1177,8 @@ class Progress extends DataClass implements Insertable<Progress> {
     map['user_id'] = Variable<String>(userId);
     map['lesson_id'] = Variable<String>(lessonId);
     map['progress_percent'] = Variable<int>(progressPercent);
+    map['score'] = Variable<int>(score);
+    map['mastery_level'] = Variable<String>(masteryLevel);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['sync_status'] = Variable<String>(syncStatus);
     return map;
@@ -1137,6 +1190,8 @@ class Progress extends DataClass implements Insertable<Progress> {
       userId: Value(userId),
       lessonId: Value(lessonId),
       progressPercent: Value(progressPercent),
+      score: Value(score),
+      masteryLevel: Value(masteryLevel),
       updatedAt: Value(updatedAt),
       syncStatus: Value(syncStatus),
     );
@@ -1152,6 +1207,8 @@ class Progress extends DataClass implements Insertable<Progress> {
       userId: serializer.fromJson<String>(json['userId']),
       lessonId: serializer.fromJson<String>(json['lessonId']),
       progressPercent: serializer.fromJson<int>(json['progressPercent']),
+      score: serializer.fromJson<int>(json['score']),
+      masteryLevel: serializer.fromJson<String>(json['masteryLevel']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
     );
@@ -1164,6 +1221,8 @@ class Progress extends DataClass implements Insertable<Progress> {
       'userId': serializer.toJson<String>(userId),
       'lessonId': serializer.toJson<String>(lessonId),
       'progressPercent': serializer.toJson<int>(progressPercent),
+      'score': serializer.toJson<int>(score),
+      'masteryLevel': serializer.toJson<String>(masteryLevel),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncStatus': serializer.toJson<String>(syncStatus),
     };
@@ -1174,6 +1233,8 @@ class Progress extends DataClass implements Insertable<Progress> {
     String? userId,
     String? lessonId,
     int? progressPercent,
+    int? score,
+    String? masteryLevel,
     DateTime? updatedAt,
     String? syncStatus,
   }) => Progress(
@@ -1181,6 +1242,8 @@ class Progress extends DataClass implements Insertable<Progress> {
     userId: userId ?? this.userId,
     lessonId: lessonId ?? this.lessonId,
     progressPercent: progressPercent ?? this.progressPercent,
+    score: score ?? this.score,
+    masteryLevel: masteryLevel ?? this.masteryLevel,
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
   );
@@ -1192,6 +1255,10 @@ class Progress extends DataClass implements Insertable<Progress> {
       progressPercent: data.progressPercent.present
           ? data.progressPercent.value
           : this.progressPercent,
+      score: data.score.present ? data.score.value : this.score,
+      masteryLevel: data.masteryLevel.present
+          ? data.masteryLevel.value
+          : this.masteryLevel,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
@@ -1206,6 +1273,8 @@ class Progress extends DataClass implements Insertable<Progress> {
           ..write('userId: $userId, ')
           ..write('lessonId: $lessonId, ')
           ..write('progressPercent: $progressPercent, ')
+          ..write('score: $score, ')
+          ..write('masteryLevel: $masteryLevel, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus')
           ..write(')'))
@@ -1213,8 +1282,16 @@ class Progress extends DataClass implements Insertable<Progress> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, userId, lessonId, progressPercent, updatedAt, syncStatus);
+  int get hashCode => Object.hash(
+    id,
+    userId,
+    lessonId,
+    progressPercent,
+    score,
+    masteryLevel,
+    updatedAt,
+    syncStatus,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1223,6 +1300,8 @@ class Progress extends DataClass implements Insertable<Progress> {
           other.userId == this.userId &&
           other.lessonId == this.lessonId &&
           other.progressPercent == this.progressPercent &&
+          other.score == this.score &&
+          other.masteryLevel == this.masteryLevel &&
           other.updatedAt == this.updatedAt &&
           other.syncStatus == this.syncStatus);
 }
@@ -1232,6 +1311,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
   final Value<String> userId;
   final Value<String> lessonId;
   final Value<int> progressPercent;
+  final Value<int> score;
+  final Value<String> masteryLevel;
   final Value<DateTime> updatedAt;
   final Value<String> syncStatus;
   final Value<int> rowid;
@@ -1240,6 +1321,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
     this.userId = const Value.absent(),
     this.lessonId = const Value.absent(),
     this.progressPercent = const Value.absent(),
+    this.score = const Value.absent(),
+    this.masteryLevel = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1249,6 +1332,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
     required String userId,
     required String lessonId,
     this.progressPercent = const Value.absent(),
+    this.score = const Value.absent(),
+    this.masteryLevel = const Value.absent(),
     required DateTime updatedAt,
     this.syncStatus = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1261,6 +1346,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
     Expression<String>? userId,
     Expression<String>? lessonId,
     Expression<int>? progressPercent,
+    Expression<int>? score,
+    Expression<String>? masteryLevel,
     Expression<DateTime>? updatedAt,
     Expression<String>? syncStatus,
     Expression<int>? rowid,
@@ -1270,6 +1357,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
       if (userId != null) 'user_id': userId,
       if (lessonId != null) 'lesson_id': lessonId,
       if (progressPercent != null) 'progress_percent': progressPercent,
+      if (score != null) 'score': score,
+      if (masteryLevel != null) 'mastery_level': masteryLevel,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (rowid != null) 'rowid': rowid,
@@ -1281,6 +1370,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
     Value<String>? userId,
     Value<String>? lessonId,
     Value<int>? progressPercent,
+    Value<int>? score,
+    Value<String>? masteryLevel,
     Value<DateTime>? updatedAt,
     Value<String>? syncStatus,
     Value<int>? rowid,
@@ -1290,6 +1381,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
       userId: userId ?? this.userId,
       lessonId: lessonId ?? this.lessonId,
       progressPercent: progressPercent ?? this.progressPercent,
+      score: score ?? this.score,
+      masteryLevel: masteryLevel ?? this.masteryLevel,
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
       rowid: rowid ?? this.rowid,
@@ -1311,6 +1404,12 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
     if (progressPercent.present) {
       map['progress_percent'] = Variable<int>(progressPercent.value);
     }
+    if (score.present) {
+      map['score'] = Variable<int>(score.value);
+    }
+    if (masteryLevel.present) {
+      map['mastery_level'] = Variable<String>(masteryLevel.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -1330,6 +1429,8 @@ class ProgressesCompanion extends UpdateCompanion<Progress> {
           ..write('userId: $userId, ')
           ..write('lessonId: $lessonId, ')
           ..write('progressPercent: $progressPercent, ')
+          ..write('score: $score, ')
+          ..write('masteryLevel: $masteryLevel, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('rowid: $rowid')
@@ -1413,6 +1514,19 @@ class $SyncQueueItemsTable extends SyncQueueItems
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _lastAttemptAtMeta = const VerificationMeta(
+    'lastAttemptAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastAttemptAt =
+      GeneratedColumn<DateTime>(
+        'last_attempt_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(null),
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1421,6 +1535,7 @@ class $SyncQueueItemsTable extends SyncQueueItems
     payload,
     retryCount,
     createdAt,
+    lastAttemptAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1478,6 +1593,15 @@ class $SyncQueueItemsTable extends SyncQueueItems
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('last_attempt_at')) {
+      context.handle(
+        _lastAttemptAtMeta,
+        lastAttemptAt.isAcceptableOrUnknown(
+          data['last_attempt_at']!,
+          _lastAttemptAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1511,6 +1635,10 @@ class $SyncQueueItemsTable extends SyncQueueItems
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      lastAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_attempt_at'],
+      ),
     );
   }
 
@@ -1527,6 +1655,7 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
   final String payload;
   final int retryCount;
   final DateTime createdAt;
+  final DateTime? lastAttemptAt;
   const SyncQueueItem({
     required this.id,
     required this.operationType,
@@ -1534,6 +1663,7 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
     required this.payload,
     required this.retryCount,
     required this.createdAt,
+    this.lastAttemptAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1544,6 +1674,9 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
     map['payload'] = Variable<String>(payload);
     map['retry_count'] = Variable<int>(retryCount);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || lastAttemptAt != null) {
+      map['last_attempt_at'] = Variable<DateTime>(lastAttemptAt);
+    }
     return map;
   }
 
@@ -1555,6 +1688,9 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
       payload: Value(payload),
       retryCount: Value(retryCount),
       createdAt: Value(createdAt),
+      lastAttemptAt: lastAttemptAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastAttemptAt),
     );
   }
 
@@ -1570,6 +1706,7 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
       payload: serializer.fromJson<String>(json['payload']),
       retryCount: serializer.fromJson<int>(json['retryCount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      lastAttemptAt: serializer.fromJson<DateTime?>(json['lastAttemptAt']),
     );
   }
   @override
@@ -1582,6 +1719,7 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
       'payload': serializer.toJson<String>(payload),
       'retryCount': serializer.toJson<int>(retryCount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'lastAttemptAt': serializer.toJson<DateTime?>(lastAttemptAt),
     };
   }
 
@@ -1592,6 +1730,7 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
     String? payload,
     int? retryCount,
     DateTime? createdAt,
+    Value<DateTime?> lastAttemptAt = const Value.absent(),
   }) => SyncQueueItem(
     id: id ?? this.id,
     operationType: operationType ?? this.operationType,
@@ -1599,6 +1738,9 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
     payload: payload ?? this.payload,
     retryCount: retryCount ?? this.retryCount,
     createdAt: createdAt ?? this.createdAt,
+    lastAttemptAt: lastAttemptAt.present
+        ? lastAttemptAt.value
+        : this.lastAttemptAt,
   );
   SyncQueueItem copyWithCompanion(SyncQueueItemsCompanion data) {
     return SyncQueueItem(
@@ -1612,6 +1754,9 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
           ? data.retryCount.value
           : this.retryCount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      lastAttemptAt: data.lastAttemptAt.present
+          ? data.lastAttemptAt.value
+          : this.lastAttemptAt,
     );
   }
 
@@ -1623,14 +1768,22 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
           ..write('entityId: $entityId, ')
           ..write('payload: $payload, ')
           ..write('retryCount: $retryCount, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('lastAttemptAt: $lastAttemptAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, operationType, entityId, payload, retryCount, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    operationType,
+    entityId,
+    payload,
+    retryCount,
+    createdAt,
+    lastAttemptAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1640,7 +1793,8 @@ class SyncQueueItem extends DataClass implements Insertable<SyncQueueItem> {
           other.entityId == this.entityId &&
           other.payload == this.payload &&
           other.retryCount == this.retryCount &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.lastAttemptAt == this.lastAttemptAt);
 }
 
 class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
@@ -1650,6 +1804,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
   final Value<String> payload;
   final Value<int> retryCount;
   final Value<DateTime> createdAt;
+  final Value<DateTime?> lastAttemptAt;
   const SyncQueueItemsCompanion({
     this.id = const Value.absent(),
     this.operationType = const Value.absent(),
@@ -1657,6 +1812,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
     this.payload = const Value.absent(),
     this.retryCount = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.lastAttemptAt = const Value.absent(),
   });
   SyncQueueItemsCompanion.insert({
     this.id = const Value.absent(),
@@ -1665,6 +1821,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
     required String payload,
     this.retryCount = const Value.absent(),
     required DateTime createdAt,
+    this.lastAttemptAt = const Value.absent(),
   }) : operationType = Value(operationType),
        entityId = Value(entityId),
        payload = Value(payload),
@@ -1676,6 +1833,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
     Expression<String>? payload,
     Expression<int>? retryCount,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? lastAttemptAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1684,6 +1842,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
       if (payload != null) 'payload': payload,
       if (retryCount != null) 'retry_count': retryCount,
       if (createdAt != null) 'created_at': createdAt,
+      if (lastAttemptAt != null) 'last_attempt_at': lastAttemptAt,
     });
   }
 
@@ -1694,6 +1853,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
     Value<String>? payload,
     Value<int>? retryCount,
     Value<DateTime>? createdAt,
+    Value<DateTime?>? lastAttemptAt,
   }) {
     return SyncQueueItemsCompanion(
       id: id ?? this.id,
@@ -1702,6 +1862,7 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
       payload: payload ?? this.payload,
       retryCount: retryCount ?? this.retryCount,
       createdAt: createdAt ?? this.createdAt,
+      lastAttemptAt: lastAttemptAt ?? this.lastAttemptAt,
     );
   }
 
@@ -1726,6 +1887,9 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (lastAttemptAt.present) {
+      map['last_attempt_at'] = Variable<DateTime>(lastAttemptAt.value);
+    }
     return map;
   }
 
@@ -1737,7 +1901,8 @@ class SyncQueueItemsCompanion extends UpdateCompanion<SyncQueueItem> {
           ..write('entityId: $entityId, ')
           ..write('payload: $payload, ')
           ..write('retryCount: $retryCount, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('lastAttemptAt: $lastAttemptAt')
           ..write(')'))
         .toString();
   }
@@ -2841,6 +3006,8 @@ typedef $$ProgressesTableCreateCompanionBuilder =
       required String userId,
       required String lessonId,
       Value<int> progressPercent,
+      Value<int> score,
+      Value<String> masteryLevel,
       required DateTime updatedAt,
       Value<String> syncStatus,
       Value<int> rowid,
@@ -2851,6 +3018,8 @@ typedef $$ProgressesTableUpdateCompanionBuilder =
       Value<String> userId,
       Value<String> lessonId,
       Value<int> progressPercent,
+      Value<int> score,
+      Value<String> masteryLevel,
       Value<DateTime> updatedAt,
       Value<String> syncStatus,
       Value<int> rowid,
@@ -2912,6 +3081,16 @@ class $$ProgressesTableFilterComposer
 
   ColumnFilters<int> get progressPercent => $composableBuilder(
     column: $table.progressPercent,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get score => $composableBuilder(
+    column: $table.score,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get masteryLevel => $composableBuilder(
+    column: $table.masteryLevel,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2991,6 +3170,16 @@ class $$ProgressesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get score => $composableBuilder(
+    column: $table.score,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get masteryLevel => $composableBuilder(
+    column: $table.masteryLevel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -3062,6 +3251,14 @@ class $$ProgressesTableAnnotationComposer
 
   GeneratedColumn<int> get progressPercent => $composableBuilder(
     column: $table.progressPercent,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get score =>
+      $composableBuilder(column: $table.score, builder: (column) => column);
+
+  GeneratedColumn<String> get masteryLevel => $composableBuilder(
+    column: $table.masteryLevel,
     builder: (column) => column,
   );
 
@@ -3152,6 +3349,8 @@ class $$ProgressesTableTableManager
                 Value<String> userId = const Value.absent(),
                 Value<String> lessonId = const Value.absent(),
                 Value<int> progressPercent = const Value.absent(),
+                Value<int> score = const Value.absent(),
+                Value<String> masteryLevel = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -3160,6 +3359,8 @@ class $$ProgressesTableTableManager
                 userId: userId,
                 lessonId: lessonId,
                 progressPercent: progressPercent,
+                score: score,
+                masteryLevel: masteryLevel,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
                 rowid: rowid,
@@ -3170,6 +3371,8 @@ class $$ProgressesTableTableManager
                 required String userId,
                 required String lessonId,
                 Value<int> progressPercent = const Value.absent(),
+                Value<int> score = const Value.absent(),
+                Value<String> masteryLevel = const Value.absent(),
                 required DateTime updatedAt,
                 Value<String> syncStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -3178,6 +3381,8 @@ class $$ProgressesTableTableManager
                 userId: userId,
                 lessonId: lessonId,
                 progressPercent: progressPercent,
+                score: score,
+                masteryLevel: masteryLevel,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
                 rowid: rowid,
@@ -3270,6 +3475,7 @@ typedef $$SyncQueueItemsTableCreateCompanionBuilder =
       required String payload,
       Value<int> retryCount,
       required DateTime createdAt,
+      Value<DateTime?> lastAttemptAt,
     });
 typedef $$SyncQueueItemsTableUpdateCompanionBuilder =
     SyncQueueItemsCompanion Function({
@@ -3279,6 +3485,7 @@ typedef $$SyncQueueItemsTableUpdateCompanionBuilder =
       Value<String> payload,
       Value<int> retryCount,
       Value<DateTime> createdAt,
+      Value<DateTime?> lastAttemptAt,
     });
 
 class $$SyncQueueItemsTableFilterComposer
@@ -3317,6 +3524,11 @@ class $$SyncQueueItemsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastAttemptAt => $composableBuilder(
+    column: $table.lastAttemptAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3359,6 +3571,11 @@ class $$SyncQueueItemsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get lastAttemptAt => $composableBuilder(
+    column: $table.lastAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SyncQueueItemsTableAnnotationComposer
@@ -3391,6 +3608,11 @@ class $$SyncQueueItemsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastAttemptAt => $composableBuilder(
+    column: $table.lastAttemptAt,
+    builder: (column) => column,
+  );
 }
 
 class $$SyncQueueItemsTableTableManager
@@ -3432,6 +3654,7 @@ class $$SyncQueueItemsTableTableManager
                 Value<String> payload = const Value.absent(),
                 Value<int> retryCount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> lastAttemptAt = const Value.absent(),
               }) => SyncQueueItemsCompanion(
                 id: id,
                 operationType: operationType,
@@ -3439,6 +3662,7 @@ class $$SyncQueueItemsTableTableManager
                 payload: payload,
                 retryCount: retryCount,
                 createdAt: createdAt,
+                lastAttemptAt: lastAttemptAt,
               ),
           createCompanionCallback:
               ({
@@ -3448,6 +3672,7 @@ class $$SyncQueueItemsTableTableManager
                 required String payload,
                 Value<int> retryCount = const Value.absent(),
                 required DateTime createdAt,
+                Value<DateTime?> lastAttemptAt = const Value.absent(),
               }) => SyncQueueItemsCompanion.insert(
                 id: id,
                 operationType: operationType,
@@ -3455,6 +3680,7 @@ class $$SyncQueueItemsTableTableManager
                 payload: payload,
                 retryCount: retryCount,
                 createdAt: createdAt,
+                lastAttemptAt: lastAttemptAt,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

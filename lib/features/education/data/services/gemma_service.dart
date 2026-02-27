@@ -152,7 +152,7 @@ $lessonContent
 
         return response.isNotEmpty
             ? response
-            : "مش قادر أطلع لك شرح دلوقتي، جرب تسألني سؤال محدد أكتر.";
+            : 'مش قادر أطلع لك شرح دلوقتي، جرب تسألني سؤال محدد أكتر.';
       } finally {
         await session.close();
       }

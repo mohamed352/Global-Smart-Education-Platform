@@ -29,34 +29,34 @@ class TeacherTtsService {
 
       _tts.setStartHandler(() {
         isSpeaking.value = true;
-        log.d('TTS started speaking', tag: LogTags.app);
+        log.d('TTS started speaking');
       });
 
       _tts.setCompletionHandler(() {
         isSpeaking.value = false;
-        log.d('TTS finished speaking', tag: LogTags.app);
+        log.d('TTS finished speaking');
       });
 
       _tts.setCancelHandler(() {
         isSpeaking.value = false;
-        log.d('TTS cancelled', tag: LogTags.app);
+        log.d('TTS cancelled');
       });
 
       _tts.setErrorHandler((dynamic msg) {
         isSpeaking.value = false;
-        log.e('TTS error: $msg', tag: LogTags.error);
+        log.e('TTS error: $msg');
       });
 
-      log.i('TTS initialized (Arabic, offline)', tag: LogTags.app);
+      log.i('TTS initialized (Arabic, offline)');
     } catch (e) {
-      log.e('TTS init error', tag: LogTags.error, error: e);
+      log.e('TTS init error', error: e);
     }
   }
 
   /// Speak text aloud (respects mute state)
   Future<void> speak(String text) async {
     if (_isMuted) {
-      log.d('TTS muted — skipping', tag: LogTags.app);
+      log.d('TTS muted — skipping');
       return;
     }
     try {
@@ -70,7 +70,7 @@ class TeacherTtsService {
       await _tts.stop();
       await _tts.speak(cleanText);
     } catch (e) {
-      log.e('TTS speak error', tag: LogTags.error, error: e);
+      log.e('TTS speak error', error: e);
       isSpeaking.value = false;
     }
   }
@@ -81,7 +81,7 @@ class TeacherTtsService {
       await _tts.stop();
       isSpeaking.value = false;
     } catch (e) {
-      log.e('TTS stop error', tag: LogTags.error, error: e);
+      log.e('TTS stop error', error: e);
     }
   }
 
@@ -91,7 +91,7 @@ class TeacherTtsService {
     if (_isMuted) {
       stop();
     }
-    log.i('TTS mute: $_isMuted', tag: LogTags.app);
+    log.i('TTS mute: $_isMuted');
   }
 
   /// Set mute state directly

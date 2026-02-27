@@ -158,7 +158,7 @@ class LessonAiService {
 
   /// Generate a welcoming greeting when student opens the chat
   String generateGreeting(String lessonTitle) {
-    log.d('Generating greeting for: $lessonTitle', tag: LogTags.app);
+    log.d('Generating greeting for: $lessonTitle');
     return 'أهلاً وسهلاً يا بطل! 🎓\n\n'
         'أنا معلمك الذكي وجاهز أساعدك في درس "$lessonTitle".\n\n'
         'اسألني أي سؤال عن الدرس وأنا إن شاء الله أوضحلك كل شيء بطريقة سهلة وبسيطة.\n\n'
@@ -178,20 +178,18 @@ class LessonAiService {
     required String lessonTitle,
     required String question,
   }) {
-    log.d('Processing question: "$question"', tag: LogTags.app);
+    log.d('Processing question: "$question"');
     log.d(
       'Lesson: "$lessonTitle" (${lessonContent.length} chars)',
-      tag: LogTags.app,
     );
 
     // Step 1: Extract keywords from question
     final questionKeywords = _extractKeywords(question);
-    log.d('Question keywords: $questionKeywords', tag: LogTags.app);
+    log.d('Question keywords: $questionKeywords');
 
     if (questionKeywords.isEmpty) {
       log.d(
         'No meaningful keywords, providing general summary',
-        tag: LogTags.app,
       );
       return _buildGeneralSummary(lessonContent, lessonTitle);
     }
@@ -200,7 +198,6 @@ class LessonAiService {
     final segments = _segmentContent(lessonContent);
     log.d(
       'Content segmented into ${segments.length} segments',
-      tag: LogTags.app,
     );
 
     // Step 3: Score segments by relevance
@@ -210,7 +207,7 @@ class LessonAiService {
     final topScore = scoredSegments.isNotEmpty
         ? scoredSegments.first.score
         : 0.0;
-    log.d('Top relevance score: $topScore', tag: LogTags.app);
+    log.d('Top relevance score: $topScore');
 
     if (topScore < 0.05) {
       // Check if question keywords appear in lesson title
@@ -222,7 +219,7 @@ class LessonAiService {
           .length;
 
       if (titleOverlap == 0) {
-        log.d('Off-topic question detected, redirecting', tag: LogTags.app);
+        log.d('Off-topic question detected, redirecting');
         return _redirects[_random.nextInt(_redirects.length)];
       }
     }
@@ -236,7 +233,7 @@ class LessonAiService {
       fullContent: lessonContent,
     );
 
-    log.d('Answer generated (${answer.length} chars)', tag: LogTags.app);
+    log.d('Answer generated (${answer.length} chars)');
     return answer;
   }
 
@@ -332,24 +329,37 @@ class LessonAiService {
 
       for (final qk in questionKeywords) {
         if (_segmentContainsKeyword(segment, qk)) {
+          // TF-IDF inspired scoring
           final tf =
               _countKeywordOccurrences(segment, qk) /
               segmentKeywords.length.clamp(1, 1000);
           final df = docFrequency[qk] ?? 1;
-          final idf = df > 0
-              ? math.log(totalSegments / df) / math.log(10) + 1
-              : 1.0;
-          score += tf * idf;
+          final idf = math.log(totalSegments / df) / math.log(10) + 1;
+
+          // SPECIALIZED TERM WEIGHTING:
+          // Longer keywords or words that appear in fewer segments are often more important
+          final weight = (qk.length > 4 ? 1.5 : 1.0) * (idf > 1.2 ? 1.3 : 1.0);
+          score += tf * idf * weight;
         }
+
+        // Fuzzy matching for Arabic variations (root matches)
         for (final sk in segmentKeywords) {
-          if (sk != qk && _fuzzyMatch(qk, sk)) score += 0.3;
+          if (sk != qk && _fuzzyMatch(qk, sk)) {
+            score += 0.2; // Minor boost for partial matches
+          }
         }
       }
 
-      final matchCount = questionKeywords
+      // MULTI-KEYWORD COHERENCE BOOST:
+      // If a segment contains MULTIPLE different keywords from the question,
+      // it's significantly more likely to be the direct answer.
+      final uniqueMatches = questionKeywords
           .where((k) => _segmentContainsKeyword(segment, k))
           .length;
-      if (matchCount > 1) score *= 1.0 + (matchCount * 0.2);
+
+      if (uniqueMatches > 1) {
+        score *= (1.0 + (uniqueMatches * 0.4));
+      }
 
       if (score > 0) {
         scored.add(_ScoredSegment(segment: segment, score: score, index: i));
@@ -423,12 +433,26 @@ class LessonAiService {
     }
     buffer.writeln();
 
+    // Select top segments but maintain some variety
     final topSegments = scoredSegments.take(3).toList()
       ..sort((a, b) => a.index.compareTo(b.index));
 
+    // Confidence heuristic
+    final avgScore = topSegments.isEmpty
+        ? 0.0
+        : topSegments.map((s) => s.score).reduce((a, b) => a + b) /
+              topSegments.length;
+
     for (var i = 0; i < topSegments.length; i++) {
       if (i > 0) buffer.writeln();
-      buffer.writeln('• ${topSegments[i].segment.trim()}');
+      final segmentText = topSegments[i].segment.trim();
+
+      // If confidence is high, present as factual, otherwise as "it seems"
+      if (avgScore > 0.8 || i == 0) {
+        buffer.writeln('• $segmentText');
+      } else {
+        buffer.writeln('• وتذكر المصادر كمان أن $segmentText');
+      }
     }
 
     if (topSegments.length > 1) {

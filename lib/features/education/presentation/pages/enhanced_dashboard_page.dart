@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:global_smart_education_platform/features/education/presentation/cubit/enhanced_dashboard_cubit.dart';
 import 'package:global_smart_education_platform/features/education/presentation/cubit/enhanced_dashboard_state.dart';
 import 'package:global_smart_education_platform/features/education/data/services/sync_manager.dart';
+import 'package:global_smart_education_platform/core/widgets/error_boundary.dart';
 import 'package:global_smart_education_platform/features/education/presentation/pages/lesson_page.dart';
 import 'package:global_smart_education_platform/features/education/presentation/widgets/lesson_card.dart';
 import 'package:global_smart_education_platform/features/education/presentation/widgets/sync_status_icon.dart';
@@ -14,34 +15,35 @@ class EnhancedDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title:
-            BlocSelector<
-              EnhancedDashboardCubit,
-              EnhancedDashboardState,
-              String
-            >(
-              selector: (state) => state.users.isNotEmpty
-                  ? state.users.first.name
-                  : 'جاري التحميل...',
-              builder: (context, userName) =>
-                  Text('المعلم الذكي - $userName'),
+    return AppErrorBoundary(
+      child: Scaffold(
+        appBar: AppBar(
+          title:
+              BlocSelector<
+                EnhancedDashboardCubit,
+                EnhancedDashboardState,
+                String
+              >(
+                selector: (state) => state.users.isNotEmpty
+                    ? state.users.first.name
+                    : 'جاري التحميل...',
+                builder: (context, userName) =>
+                    Text('المعلم الذكي - $userName'),
+              ),
+          centerTitle: true,
+          elevation: 0,
+          actions: <Widget>[
+            _HeaderSyncIcon(),
+            IconButton(
+              icon: const Icon(Icons.sync),
+              tooltip: 'مزامنة الآن',
+              onPressed: () =>
+                  context.read<EnhancedDashboardCubit>().triggerSync(),
             ),
-        centerTitle: true,
-        elevation: 0,
-        actions: <Widget>[
-          _HeaderSyncIcon(),
-          IconButton(
-            icon: const Icon(Icons.sync),
-            tooltip: 'مزامنة الآن',
-            onPressed: () => context
-                .read<EnhancedDashboardCubit>()
-                .triggerSync(),
-          ),
-        ],
+          ],
+        ),
+        body: _EnhancedDashboardBody(),
       ),
-      body: _EnhancedDashboardBody(),
     );
   }
 }
@@ -71,34 +73,21 @@ class _HeaderSyncIcon extends StatelessWidget {
 class _EnhancedDashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-      EnhancedDashboardCubit,
-      EnhancedDashboardState
-    >(
+    return BlocBuilder<EnhancedDashboardCubit, EnhancedDashboardState>(
       builder: (context, state) {
         if (state.lessons.isEmpty) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
-        final cubit = context
-            .read<EnhancedDashboardCubit>();
-        final userId = state.users.isNotEmpty
-            ? state.users.first.id
-            : '';
+        final cubit = context.read<EnhancedDashboardCubit>();
+        final userId = state.users.isNotEmpty ? state.users.first.id : '';
 
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // بطاقة معلومات الطالب
             if (state.users.isNotEmpty) ...[
-              Text(
-                'ملف الطالب',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge,
-              ),
+              Text('ملف الطالب', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               UserCard(user: state.users.first),
               const SizedBox(height: 24),
@@ -120,42 +109,23 @@ class _EnhancedDashboardBody extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ...cubit.getFeaturedLessons().map((lesson) {
-              return _buildLessonTile(
-                context,
-                lesson,
-                userId,
-                cubit,
-              );
+              return _buildLessonTile(context, lesson, userId, cubit);
             }),
             const SizedBox(height: 24),
 
             // جميع الدروس
-            Text(
-              'جميع الدروس',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('جميع الدروس', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             ...state.lessons.map((lesson) {
-              final progressId = cubit.getProgressId(
-                userId,
-                lesson.id,
-              );
+              final progressId = cubit.getProgressId(userId, lesson.id);
               return LessonCard(
                 lesson: lesson,
-                progressPercent: cubit.getProgressPercent(
-                  userId,
-                  lesson.id,
-                ),
-                syncStatus: cubit.getProgressSyncStatus(
-                  userId,
-                  lesson.id,
-                ),
+                progressPercent: cubit.getProgressPercent(userId, lesson.id),
+                syncStatus: cubit.getProgressSyncStatus(userId, lesson.id),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => LessonPage(
-                      lessonId: lesson.id,
-                      userId: userId,
-                    ),
+                    builder: (_) =>
+                        LessonPage(lessonId: lesson.id, userId: userId),
                   ),
                 ),
                 onUpdateOffline: userId.isNotEmpty
@@ -166,16 +136,10 @@ class _EnhancedDashboardBody extends StatelessWidget {
                     : null,
                 onSimulateConflict: progressId != null
                     ? () {
-                        cubit.simulateRemoteConflict(
-                          progressId,
-                        );
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(
+                        cubit.simulateRemoteConflict(progressId);
+                        ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'تم تسجيل تعارض في البيانات.',
-                            ),
+                            content: Text('تم تسجيل تعارض في البيانات.'),
                           ),
                         );
                       }
@@ -243,15 +207,15 @@ class _EnhancedDashboardBody extends StatelessWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withOpacity(0.3)),
+        side: BorderSide(color: color.withValues(alpha: 0.3)),
       ),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
             colors: [
-              color.withOpacity(0.1),
-              color.withOpacity(0.05),
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -264,17 +228,17 @@ class _EnhancedDashboardBody extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               value,
-              style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: Colors.grey[600]),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -291,21 +255,14 @@ class _EnhancedDashboardBody extends StatelessWidget {
   ) {
     final lessonId = lesson.id as String;
     final lessonTitle = lesson.title as String;
-    final progressPercent = cubit.getProgressPercent(
-      userId,
-      lessonId,
-    );
+    final progressPercent = cubit.getProgressPercent(userId, lessonId);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: progressPercent == 100
-              ? Colors.green
-              : Colors.blue,
+          backgroundColor: progressPercent == 100 ? Colors.green : Colors.blue,
           child: Icon(
-            progressPercent == 100
-                ? Icons.check
-                : Icons.school,
+            progressPercent == 100 ? Icons.check : Icons.school,
             color: Colors.white,
           ),
         ),
@@ -328,10 +285,7 @@ class _EnhancedDashboardBody extends StatelessWidget {
         trailing: const Icon(Icons.arrow_forward),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => LessonPage(
-              lessonId: lessonId,
-              userId: userId,
-            ),
+            builder: (_) => LessonPage(lessonId: lessonId, userId: userId),
           ),
         ),
       ),

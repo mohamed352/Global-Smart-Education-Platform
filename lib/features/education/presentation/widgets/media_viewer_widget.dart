@@ -99,17 +99,17 @@ class _MediaViewerWidgetState
                     'Failed to load image',
                     error: error,
                   );
-                  return Center(
+                  return const Center(
                     child: Column(
                       mainAxisAlignment:
                           MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline,
                           size: 48,
                         ),
-                        const SizedBox(height: 8),
-                        const Text('فشل تحميل الصورة'),
+                        SizedBox(height: 8),
+                        Text('فشل تحميل الصورة'),
                       ],
                     ),
                   );

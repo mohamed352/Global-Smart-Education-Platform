@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
@@ -128,10 +129,18 @@ class SyncManager {
     );
 
     for (final SyncQueueItem item in pendingItems) {
+      if (!_isReadyForRetry(item)) {
+        log.d(
+          'Queue item ${item.id} is in backoff period (retry=${item.retryCount}). Skipping.',
+          tag: LogTags.sync,
+        );
+        continue;
+      }
+
       if (item.retryCount >= SyncConstants.maxRetryCount) {
         log.w(
           'Sync item ${item.id} exceeded max retries '
-          '(${item.retryCount}/${SyncConstants.maxRetryCount}). Skipping.',
+          '(${item.retryCount}/${SyncConstants.maxRetryCount}). Final failure recorded.',
           tag: LogTags.sync,
         );
         continue;
@@ -153,13 +162,24 @@ class SyncManager {
         );
       } catch (e) {
         await _repository.incrementRetryCount(item.id, item.retryCount);
+        final backoff = math.pow(2, item.retryCount + 1) * 30;
         log.w(
           'Upload failed for queue item ${item.id}. '
-          'Retry ${item.retryCount + 1}/${SyncConstants.maxRetryCount}',
+          'Retry ${item.retryCount + 1}/${SyncConstants.maxRetryCount} scheduled in $backoff seconds.',
           tag: LogTags.sync,
         );
       }
     }
+  }
+
+  bool _isReadyForRetry(SyncQueueItem item) {
+    if (item.lastAttemptAt == null) return true;
+    // Exponential backoff: 2^retryCount * 30 seconds
+    final int backoffSeconds = math.pow(2, item.retryCount).toInt() * 30;
+    final DateTime nextAttempt = item.lastAttemptAt!.add(
+      Duration(seconds: backoffSeconds),
+    );
+    return DateTime.now().isAfter(nextAttempt);
   }
 
   /// Fetches remote updates and applies LWW conflict resolution.
@@ -211,6 +231,21 @@ class SyncManager {
     // Always seed offline lessons (idempotent)
     await seedOfflineLessons();
     await _repository.seedSampleLesson();
+
+    // Seed sample progress for the dashboard demo
+    const String solarSystemId = '550e8400-e29b-41d4-a716-446655440001';
+    final Progress? existingProgress = await _repository
+        .getProgressByUserAndLesson('current-user-id', solarSystemId);
+
+    if (existingProgress == null) {
+      await _repository.updateProgress(
+        userId: 'current-user-id',
+        lessonId: solarSystemId,
+        incrementBy: 65,
+        score: 450,
+        masteryLevel: 'intermediate',
+      );
+    }
 
     final List<User> existingUsers = await _repository.getUsers();
     if (existingUsers.isNotEmpty) {

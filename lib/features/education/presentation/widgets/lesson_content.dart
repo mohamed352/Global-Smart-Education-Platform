@@ -8,7 +8,8 @@ import 'package:global_smart_education_platform/features/education/data/datasour
 import 'package:global_smart_education_platform/features/education/presentation/cubit/lesson_cubit.dart';
 import 'package:global_smart_education_platform/features/education/presentation/widgets/lesson_audio_player.dart';
 import 'package:global_smart_education_platform/features/education/presentation/widgets/lesson_text_view.dart';
-import 'package:global_smart_education_platform/features/education/presentation/widgets/teacher_explanation_widget.dart';
+import 'package:global_smart_education_platform/features/education/presentation/cubit/teacher_explanation_cubit.dart';
+import 'package:global_smart_education_platform/features/education/presentation/screens/ai_teacher_chat_screen.dart';
 
 class LessonContent extends StatefulWidget {
   const LessonContent({
@@ -34,6 +35,19 @@ class _LessonContentState extends State<LessonContent> {
     super.initState();
     _audioPlayer = AudioPlayer();
     _initAudio();
+    _initAiTeacher();
+  }
+
+  void _initAiTeacher() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TeacherExplanationCubit>().initializeForLesson(
+          lessonId: widget.lesson.id,
+          lessonTitle: widget.lesson.title,
+          lessonContent: widget.lesson.content,
+        );
+      }
+    });
   }
 
   Future<void> _initAudio() async {
@@ -45,7 +59,7 @@ class _LessonContentState extends State<LessonContent> {
 
     try {
       final String path = widget.lesson.audioPath;
-      
+
       // Check if it's a local filesystem path (e.g., starting with C:\ or D:\)
       // or if it exists as a file on the system.
       bool isLocalFile = false;
@@ -63,9 +77,9 @@ class _LessonContentState extends State<LessonContent> {
         log.i('Loading audio from assets: $path');
         await _audioPlayer.setAsset(path);
       }
-      
+
       await _audioPlayer.load().timeout(const Duration(seconds: 5));
-      
+
       log.i('Audio loaded successfully');
       if (mounted) {
         setState(() => _isPlayerReady = true);
@@ -74,8 +88,8 @@ class _LessonContentState extends State<LessonContent> {
       log.e('Failed to load audio', error: e, stackTrace: stack);
       if (mounted) {
         setState(() {
-          _playerError = e is TimeoutException 
-              ? 'Audio loading timed out' 
+          _playerError = e is TimeoutException
+              ? 'Audio loading timed out'
               : 'Could not load audio';
         });
       }
@@ -95,7 +109,12 @@ class _LessonContentState extends State<LessonContent> {
         title: Text(widget.lesson.title),
         actions: [
           IconButton(
-            onPressed: () => TeacherExplanationWidget.show(context, widget.lesson.content),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) => const AiTeacherChatScreen(),
+              ),
+            ),
             icon: const Icon(Icons.psychology_alt),
             tooltip: 'Explain with AI',
           ),
@@ -139,7 +158,9 @@ class _CompletionBar extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        border: Border(
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
       ),
       child: isCompleted
           ? const _CompletedStatus()
@@ -147,7 +168,9 @@ class _CompletionBar extends StatelessWidget {
               onPressed: onComplete,
               icon: const Icon(Icons.done_all),
               label: const Text('Mark as Completed'),
-              style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
             ),
     );
   }

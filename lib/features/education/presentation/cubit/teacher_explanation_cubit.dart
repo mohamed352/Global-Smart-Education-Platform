@@ -85,7 +85,7 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
         tag: LogTags.bloc,
       );
     } catch (e) {
-      log.e('Error initializing', tag: LogTags.error, error: e);
+      log.e('Error initializing', error: e);
       final String greeting = _aiService.generateGreeting(lessonTitle);
       emit(
         TeacherExplanationState.loaded(<ChatMessage>[
@@ -97,8 +97,22 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
 
   /// Ask a question — generates answer 100% offline from lesson content
   Future<void> askQuestion(String content, String question) async {
-    final TeacherExplanationState currentState = state;
-    if (currentState is! _Loaded) return;
+    final currentState = state;
+    if (currentState is! _Loaded) {
+      log.w('Cannot ask question: state is not loaded', tag: LogTags.bloc);
+      return;
+    }
+
+    // Use provided content if available, otherwise fall back to stored lesson content
+    final effectiveContent = content.isNotEmpty ? content : _lessonContent;
+
+    if (effectiveContent.isEmpty) {
+      log.w(
+        'Cannot ask question: no lesson content available',
+        tag: LogTags.bloc,
+      );
+      return;
+    }
 
     final List<ChatMessage> currentMessages = List<ChatMessage>.from(
       currentState.messages,
@@ -112,9 +126,12 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
     );
 
     try {
+      // Simulate thinking for better UX
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+
       final String answer = _aiService.answerQuestion(
-        lessonContent: _lessonContent.isNotEmpty ? _lessonContent : content,
-        lessonTitle: _lessonTitle,
+        lessonContent: effectiveContent,
+        lessonTitle: _lessonTitle.isNotEmpty ? _lessonTitle : 'الدرس',
         question: question,
       );
 
@@ -137,7 +154,7 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
         log.d('Q&A saved to local database', tag: LogTags.db);
       }
     } catch (e) {
-      log.e('Error answering', tag: LogTags.error, error: e);
+      log.e('Error answering', error: e);
       currentMessages.add(
         ChatMessage(
           text: 'معلش حصلت مشكلة بسيطة. حاول تسأل مرة ثانية يا بطل! 💪',

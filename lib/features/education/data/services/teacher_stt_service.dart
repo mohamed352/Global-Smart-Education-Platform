@@ -1,109 +1,95 @@
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 
-/// Offline-first speech-to-text service for student voice input
-/// Uses device's built-in speech recognition — works offline when supported
 @lazySingleton
 class TeacherSttService {
-  TeacherSttService();
+  final SpeechToText _speechToText = SpeechToText();
+  final AppLogger log = AppLogger.instance;
+  static const String _logTag = 'STT_SERVICE';
 
-  final SpeechToText _stt = SpeechToText();
+  final ValueNotifier<bool> _isListening = ValueNotifier<bool>(false);
+  final ValueNotifier<String> _recognizedText = ValueNotifier<String>('');
+
+  ValueListenable<bool> get isListening => _isListening;
+  ValueListenable<String> get recognizedText => _recognizedText;
+
   bool _isInitialized = false;
 
-  /// Whether the service is currently listening
-  final ValueNotifier<bool> isListening = ValueNotifier<bool>(false);
-
-  /// The recognised text from the current session
-  final ValueNotifier<String> recognizedText = ValueNotifier<String>('');
-
-  /// Whether STT is available on this device
-  bool get isAvailable => _isInitialized;
-
-  /// Initialize STT — call once before first use
   Future<bool> initialize() async {
     if (_isInitialized) return true;
+
     try {
-      _isInitialized = await _stt.initialize(
-        onStatus: _onStatus,
-        onError: _onError,
+      _isInitialized = await _speechToText.initialize(
+        onError: (error) {
+          log.e('STT Error: ${error.errorMsg}', tag: _logTag);
+          _isListening.value = false;
+        },
+        onStatus: (status) {
+          log.i('STT Status: $status', tag: _logTag);
+          if (status == 'listening') {
+            _isListening.value = true;
+          } else if (status == 'notListening' || status == 'done') {
+            _isListening.value = false;
+          }
+        },
       );
-      log.i('STT initialized: $_isInitialized', tag: LogTags.app);
       return _isInitialized;
     } catch (e) {
-      log.e('STT init error', tag: LogTags.error, error: e);
+      log.e('STT Initialization failed: $e', tag: _logTag);
       return false;
     }
   }
 
-  /// Start listening for speech input (Arabic)
   Future<void> startListening({
-    required void Function(String finalText) onResult,
+    required void Function(String) onResult,
+    String? localeId,
   }) async {
-    if (!_isInitialized) {
-      final bool ready = await initialize();
-      if (!ready) {
-        log.w('STT not available on this device', tag: LogTags.app);
-        return;
-      }
+    final bool available = await initialize();
+    if (!available) {
+      log.w('STT not available', tag: _logTag);
+      return;
     }
 
-    recognizedText.value = '';
-    isListening.value = true;
+    _recognizedText.value = '';
 
-    await _stt.listen(
-      onResult: (result) {
-        recognizedText.value = result.recognizedWords;
-        if (result.finalResult) {
-          isListening.value = false;
-          final String text = result.recognizedWords.trim();
-          if (text.isNotEmpty) {
-            onResult(text);
+    // Default to Arabic (Egypt) if not specified
+    final String targetLocale = localeId ?? 'ar_EG';
+
+    try {
+      await _speechToText.listen(
+        onResult: (SpeechRecognitionResult result) {
+          _recognizedText.value = result.recognizedWords;
+          if (result.finalResult) {
+            onResult(result.recognizedWords);
+            _isListening.value = false;
           }
-          log.i('STT final result: $text', tag: LogTags.app);
-        }
-      },
-      localeId: 'ar',
-      listenMode: ListenMode.dictation,
-      cancelOnError: true,
-      partialResults: true,
-    );
-
-    log.i('STT listening started (Arabic)', tag: LogTags.app);
-  }
-
-  /// Stop listening
-  Future<void> stopListening() async {
-    await _stt.stop();
-    isListening.value = false;
-    log.i('STT listening stopped', tag: LogTags.app);
-  }
-
-  /// Cancel listening without processing
-  Future<void> cancelListening() async {
-    await _stt.cancel();
-    isListening.value = false;
-    recognizedText.value = '';
-    log.i('STT listening cancelled', tag: LogTags.app);
-  }
-
-  void _onStatus(String status) {
-    log.d('STT status: $status', tag: LogTags.app);
-    if (status == 'done' || status == 'notListening') {
-      isListening.value = false;
+        },
+        localeId: targetLocale,
+        // ignore: deprecated_member_use
+        listenMode: ListenMode.dictation,
+        // ignore: deprecated_member_use
+        cancelOnError: true,
+      );
+      _isListening.value = true;
+      log.i('STT listening started ($targetLocale)', tag: _logTag);
+    } catch (e) {
+      log.e('Error starting STT: $e', tag: _logTag);
+      _isListening.value = false;
     }
   }
 
-  void _onError(dynamic error) {
-    log.e('STT error: $error', tag: LogTags.error);
-    isListening.value = false;
+  Future<void> stopListening() async {
+    await _speechToText.stop();
+    _isListening.value = false;
+    log.i('STT listening stopped', tag: _logTag);
   }
 
-  /// Dispose resources
-  void dispose() {
-    _stt.cancel();
-    isListening.dispose();
-    recognizedText.dispose();
+  Future<void> cancelListening() async {
+    await _speechToText.cancel();
+    _isListening.value = false;
+    log.i('STT listening cancelled', tag: _logTag);
   }
 }

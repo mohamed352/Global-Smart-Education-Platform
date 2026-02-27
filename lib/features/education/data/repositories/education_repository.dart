@@ -42,6 +42,32 @@ class EducationRepository {
     String lessonId,
   ) => _db.getProgressByUserAndLesson(userId, lessonId);
 
+  Future<Map<String, dynamic>> getSummaryStats(String userId) async {
+    final List<Progress> progresses = await _db.getAllProgresses();
+    final List<Lesson> lessons = await _db.getAllLessons();
+
+    final int totalLessons = lessons.length;
+    final int completedLessons = progresses
+        .where((p) => p.progressPercent >= 100)
+        .length;
+
+    final double avgScore = progresses.isEmpty
+        ? 0
+        : progresses.map((p) => p.score).reduce((a, b) => a + b) /
+              progresses.length;
+
+    final List<QaHistoryItem> allQa = await _db
+        .select(_db.qaHistoryItems)
+        .get();
+
+    return {
+      'totalLessons': totalLessons,
+      'completedLessons': completedLessons,
+      'avgScore': avgScore,
+      'totalQuestions': allQa.where((q) => !q.isGreeting).length,
+    };
+  }
+
   /// Marks a lesson as 100% completed for a user (offline-first).
   Future<void> markLessonCompleted({
     required String userId,
@@ -71,6 +97,8 @@ class EducationRepository {
     required String userId,
     required String lessonId,
     required int progressPercent,
+    required int score,
+    required String masteryLevel,
     required DateTime updatedAt,
     required String syncStatus,
   }) {
@@ -79,6 +107,8 @@ class EducationRepository {
       userId: Value<String>(userId),
       lessonId: Value<String>(lessonId),
       progressPercent: Value<int>(progressPercent),
+      score: Value<int>(score),
+      masteryLevel: Value<String>(masteryLevel),
       updatedAt: Value<DateTime>(updatedAt),
       syncStatus: Value<String>(syncStatus),
     );
@@ -90,6 +120,8 @@ class EducationRepository {
     required String userId,
     required String lessonId,
     required int incrementBy,
+    int? score,
+    String? masteryLevel,
   }) async {
     final DateTime now = DateTime.now();
 
@@ -113,6 +145,8 @@ class EducationRepository {
           userId: userId,
           lessonId: lessonId,
           progressPercent: newPercent,
+          score: score ?? (existing?.score ?? 0),
+          masteryLevel: masteryLevel ?? (existing?.masteryLevel ?? 'beginner'),
           updatedAt: now,
           syncStatus: SyncStatus.pending.name,
         ),
@@ -124,6 +158,8 @@ class EducationRepository {
         'userId': userId,
         'lessonId': lessonId,
         'progressPercent': newPercent,
+        'score': score ?? (existing?.score ?? 0),
+        'masteryLevel': masteryLevel ?? (existing?.masteryLevel ?? 'beginner'),
         'updatedAt': now.toIso8601String(),
       };
       await _db.addToSyncQueue(
@@ -181,7 +217,9 @@ class EducationRepository {
       LessonsCompanion(
         id: const Value<String>('sample-lesson-1'),
         title: const Value<String>('Alternative Teacher - Sample Lesson'),
-        description: const Value<String>('A sample lesson for demonstrating offline-first features.'),
+        description: const Value<String>(
+          'A sample lesson for demonstrating offline-first features.',
+        ),
         content: const Value<String>(
           'Welcome to the Global Smart Education Platform.\n\n'
           'This is a sample lesson designed to showcase the offline-first approach. '
@@ -211,6 +249,8 @@ class EducationRepository {
     final String? userId = remoteData['userId'] as String?;
     final String? lessonId = remoteData['lessonId'] as String?;
     final int? remotePercent = remoteData['progressPercent'] as int?;
+    final int? remoteScore = remoteData['score'] as int?;
+    final String? remoteMastery = remoteData['masteryLevel'] as String?;
     final String? updatedAtRaw = remoteData['updatedAt'] as String?;
 
     if (remoteId == null ||
@@ -240,6 +280,8 @@ class EducationRepository {
           userId: userId,
           lessonId: lessonId,
           progressPercent: remotePercent,
+          score: remoteScore ?? 0,
+          masteryLevel: remoteMastery ?? 'beginner',
           updatedAt: remoteUpdatedAt,
           syncStatus: SyncStatus.synced.name,
         ),
@@ -260,6 +302,8 @@ class EducationRepository {
           userId: userId,
           lessonId: lessonId,
           progressPercent: remotePercent,
+          score: remoteScore ?? local.score,
+          masteryLevel: remoteMastery ?? local.masteryLevel,
           updatedAt: remoteUpdatedAt,
           syncStatus: SyncStatus.synced.name,
         ),

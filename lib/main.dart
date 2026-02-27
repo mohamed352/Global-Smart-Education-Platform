@@ -15,11 +15,11 @@ Future<void> main() async {
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  log.i('Firebase initialized', tag: LogTags.app);
+  log.i('Firebase initialized');
 
   // Initialize dependency injection
   await configureDependencies();
-  log.i('Dependencies configured', tag: LogTags.app);
+  log.i('Dependencies configured');
 
   // Initialize SyncManager (connectivity listener)
   final SyncManager syncManager = getIt<SyncManager>();
@@ -30,7 +30,7 @@ Future<void> main() async {
 
   // NOTE: No Gemma model download required!
   // AI Teacher uses local lesson-content analysis — always ready.
-  log.i('AI Teacher engine ready (offline, no model needed)', tag: LogTags.app);
+  log.i('AI Teacher engine ready (offline, no model needed)');
 
   runApp(const EducationApp());
 }

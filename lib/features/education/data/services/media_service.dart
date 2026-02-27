@@ -72,7 +72,7 @@ class MediaService {
   Future<bool> deleteFile(String filePath) async {
     try {
       final file = File(filePath);
-      if (await file.exists()) {
+      if (file.existsSync()) {
         await file.delete();
         log.i('File deleted: $filePath');
         return true;
@@ -86,7 +86,7 @@ class MediaService {
   /// التحقق من وجود ملف
   Future<bool> fileExists(String filePath) async {
     try {
-      return await File(filePath).exists();
+      return File(filePath).existsSync();
     } catch (e) {
       log.e('Failed to check file existence', error: e);
     }
@@ -94,10 +94,13 @@ class MediaService {
   }
 
   /// نسخ ملف
-  Future<String?> copyFile(String sourcePath, String destinationFileName) async {
+  Future<String?> copyFile(
+    String sourcePath,
+    String destinationFileName,
+  ) async {
     try {
       final sourceFile = File(sourcePath);
-      if (!await sourceFile.exists()) {
+      if (!sourceFile.existsSync()) {
         log.e('Source file does not exist: $sourcePath');
         return null;
       }

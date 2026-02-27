@@ -41,6 +41,8 @@ import '../../features/education/presentation/cubit/model_installation_cubit.dar
     as _i472;
 import '../../features/education/presentation/cubit/smart_teacher_cubit.dart'
     as _i515;
+import '../../features/education/presentation/cubit/student_progress_cubit.dart'
+    as _i259;
 import '../../features/education/presentation/cubit/teacher_explanation_cubit.dart'
     as _i705;
 import 'firebase_module.dart' as _i616;
@@ -81,6 +83,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i247.LessonCubit>(
       () => _i247.LessonCubit(gh<_i562.EducationRepository>()),
+    );
+    gh.factory<_i259.StudentProgressCubit>(
+      () => _i259.StudentProgressCubit(gh<_i562.EducationRepository>()),
     );
     gh.lazySingleton<_i187.SyncRepository>(
       () => _i187.SyncRepository(

@@ -44,6 +44,9 @@ class Progresses extends Table {
   TextColumn get userId => text().references(Users, #id)();
   TextColumn get lessonId => text().references(Lessons, #id)();
   IntColumn get progressPercent => integer().withDefault(const Constant(0))();
+  IntColumn get score => integer().withDefault(const Constant(0))();
+  TextColumn get masteryLevel =>
+      text().withDefault(const Constant('beginner'))();
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
 
@@ -58,6 +61,8 @@ class SyncQueueItems extends Table {
   TextColumn get payload => text()();
   IntColumn get retryCount => integer().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get lastAttemptAt =>
+      dateTime().nullable().withDefault(const Constant(null))();
 }
 
 /// Q&A history for AI teacher — stores all student questions and AI answers per lesson
@@ -82,7 +87,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -97,6 +102,13 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(qaHistoryItems);
+      }
+      if (from < 5) {
+        await m.addColumn(progresses, progresses.score);
+        await m.addColumn(progresses, progresses.masteryLevel);
+      }
+      if (from < 6) {
+        await m.addColumn(syncQueueItems, syncQueueItems.lastAttemptAt);
       }
     },
   );
@@ -159,7 +171,10 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> updateSyncQueueRetryCount(int id, int newRetryCount) =>
       (update(syncQueueItems)..where((s) => s.id.equals(id))).write(
-        SyncQueueItemsCompanion(retryCount: Value(newRetryCount)),
+        SyncQueueItemsCompanion(
+          retryCount: Value(newRetryCount),
+          lastAttemptAt: Value(DateTime.now()),
+        ),
       );
 
   Future<int> updateProgressSyncStatus(String progressId, String status) =>

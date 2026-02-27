@@ -6,11 +6,11 @@ import 'model_installation_state.dart';
 
 @lazySingleton
 class ModelInstallationCubit extends Cubit<ModelInstallationState> {
-  final GemmaService _gemmaService;
-  StreamSubscription<int>? _subscription;
 
   ModelInstallationCubit(this._gemmaService)
     : super(const ModelInstallationState.initial());
+  final GemmaService _gemmaService;
+  StreamSubscription<int>? _subscription;
 
   Future<void> checkModelStatus() async {
     emit(const ModelInstallationState.checking());

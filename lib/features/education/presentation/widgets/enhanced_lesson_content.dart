@@ -47,8 +47,9 @@ class _EnhancedLessonContentState
 
   List<String> _getTabs() {
     final tabs = ['المحتوى'];
-    if (widget.lesson.audioPath.isNotEmpty)
+    if (widget.lesson.audioPath.isNotEmpty) {
       tabs.add('الصوت');
+    }
     // imagePath و videoPath غير متاحة في نموذج البيانات الحالي
     return tabs;
   }
