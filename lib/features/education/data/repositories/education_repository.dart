@@ -33,7 +33,10 @@ class EducationRepository {
 
   Future<List<Lesson>> getLessons() => _db.getAllLessons();
 
-  Future<List<Progress>> getProgresses() => _db.getAllProgresses();
+  Future<List<Progress>> getProgresses(String userId) async {
+    final List<Progress> all = await _db.getAllProgresses();
+    return all.where((p) => p.userId == userId).toList();
+  }
 
   Future<Lesson?> getLessonById(String id) => _db.getLessonById(id);
 
@@ -43,28 +46,37 @@ class EducationRepository {
   ) => _db.getProgressByUserAndLesson(userId, lessonId);
 
   Future<Map<String, dynamic>> getSummaryStats(String userId) async {
-    final List<Progress> progresses = await _db.getAllProgresses();
+    final List<Progress> allProgresses = await _db.getAllProgresses();
+    final List<Progress> userProgresses = allProgresses
+        .where((p) => p.userId == userId)
+        .toList();
     final List<Lesson> lessons = await _db.getAllLessons();
 
     final int totalLessons = lessons.length;
-    final int completedLessons = progresses
+    final int completedLessons = userProgresses
         .where((p) => p.progressPercent >= 100)
         .length;
 
-    final double avgScore = progresses.isEmpty
+    final double avgScore = userProgresses.isEmpty
         ? 0
-        : progresses.map((p) => p.score).reduce((a, b) => a + b) /
-              progresses.length;
+        : userProgresses.map((p) => p.score).reduce((a, b) => a + b) /
+              userProgresses.length;
 
     final List<QaHistoryItem> allQa = await _db
         .select(_db.qaHistoryItems)
         .get();
 
+    // Count quiz participations as "questions" for stats purpose or keep AI questions
+    // Let's combine them: AI chat questions + (quizzes * questions_per_quiz)
+    final int aiQuestions = allQa.where((q) => !q.isGreeting).length;
+    final int quizQuestions =
+        userProgresses.where((p) => p.score > 0).length * 5;
+
     return {
       'totalLessons': totalLessons,
       'completedLessons': completedLessons,
       'avgScore': avgScore,
-      'totalQuestions': allQa.where((q) => !q.isGreeting).length,
+      'totalQuestions': aiQuestions + quizQuestions,
     };
   }
 

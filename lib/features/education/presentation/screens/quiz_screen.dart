@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:global_smart_education_platform/features/education/presentation/screens/quiz_result_screen.dart';
+import 'package:global_smart_education_platform/core/di/injection.dart';
+import 'package:global_smart_education_platform/features/education/data/repositories/education_repository.dart';
 
 // ---------------------------------------------------------------------------
 // Data model — purely in-memory, no DB dependency
@@ -75,6 +76,7 @@ class _QuizScreenState extends State<QuizScreen>
   final TextEditingController _textController = TextEditingController();
   late AnimationController _progressAnimController;
   late Animation<double> _progressAnimation;
+  final EducationRepository _repository = getIt<EducationRepository>();
 
   @override
   void initState() {
@@ -139,7 +141,7 @@ class _QuizScreenState extends State<QuizScreen>
 
   bool get _allAnswered => _answers.length == _questions.length;
 
-  void _submitQuiz() {
+  Future<void> _submitQuiz() async {
     int correct = 0;
     for (var i = 0; i < _questions.length; i++) {
       if ((_answers[i] ?? '').trim() == _questions[i].correctAnswer.trim()) {
@@ -147,27 +149,44 @@ class _QuizScreenState extends State<QuizScreen>
       }
     }
     final score = ((correct / _questions.length) * 100).round();
+
+    // Map to db mastery keys
     String mastery;
-    if (score >= 80) {
-      mastery = 'خبير';
-    } else if (score >= 60) {
-      mastery = 'متقدم';
-    } else if (score >= 40) {
-      mastery = 'متوسط';
+    if (score >= 90) {
+      mastery = 'expert';
+    } else if (score >= 75) {
+      mastery = 'advanced';
+    } else if (score >= 50) {
+      mastery = 'intermediate';
     } else {
-      mastery = 'مبتدئ';
+      mastery = 'beginner';
     }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute<void>(
-        builder: (_) => QuizResultScreen(
-          score: score,
-          masteryLevel: mastery,
-          totalQuestions: _questions.length,
-          correctAnswers: correct,
+
+    // Save progress to database
+    await _repository.updateProgress(
+      userId: 'current-user-id', // Using the same ID as StudentProgressPage
+      lessonId: widget.lessonId,
+      incrementBy: 100, // Mark as completed when quiz is done
+      score: score,
+      masteryLevel: mastery,
+    );
+
+    if (!mounted) return;
+
+    // Show result summary and go back
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تم إكمال الاختبار بنجاح! نتيجتك: $score%',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
+
+    Navigator.pop(context);
   }
 
   @override
@@ -179,39 +198,56 @@ class _QuizScreenState extends State<QuizScreen>
     final isLast = _currentIndex == _questions.length - 1;
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(widget.lessonTitle, overflow: TextOverflow.ellipsis),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
+        title: Text(
+          widget.lessonTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
+        ),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
         elevation: 0,
+        centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
             // Progress bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-              child: Row(
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 children: [
-                  Text(
-                    'السؤال ${_currentIndex + 1} من ${_questions.length}',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'السؤال ${_currentIndex + 1}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      Text(
+                        'من ${_questions.length}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: AnimatedBuilder(
-                      animation: _progressAnimation,
-                      builder: (_, __) => ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: (_currentIndex + 1) / _questions.length,
-                          minHeight: 8,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
+                  const SizedBox(height: 12),
+                  AnimatedBuilder(
+                    animation: _progressAnimation,
+                    builder: (_, __) => ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: (_currentIndex + 1) / _questions.length,
+                        minHeight: 10,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.colorScheme.primary,
                         ),
                       ),
                     ),
@@ -223,102 +259,126 @@ class _QuizScreenState extends State<QuizScreen>
             // Question content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Question text card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primaryContainer.withValues(
+                              alpha: 0.5,
+                            ),
+                            theme.colorScheme.surface,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: theme.colorScheme.outlineVariant,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: theme.colorScheme.shadow.withValues(
+                              alpha: 0.03,
+                            ),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
                       child: Text(
                         question.questionText,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          height: 1.6,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          height: 1.5,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Answers
                     if (question.isMultipleChoice)
                       ...question.options.map((option) {
                         final isSelected = currentAnswer == option;
-                        return GestureDetector(
-                          onTap: () => _answerQuestion(option),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.outlineVariant,
-                                width: isSelected ? 2 : 1,
-                              ),
-                              color: isSelected
-                                  ? theme.colorScheme.primaryContainer
-                                        .withOpacity(0.35)
-                                  : theme.colorScheme.surface,
-                            ),
-                            child: Row(
-                              children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.outlineVariant,
-                                      width: 2,
-                                    ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _answerQuestion(option),
+                              borderRadius: BorderRadius.circular(20),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary.withValues(
+                                          alpha: 0.05,
+                                        )
+                                      : theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
                                     color: isSelected
                                         ? theme.colorScheme.primary
-                                        : Colors.transparent,
+                                        : theme.colorScheme.outlineVariant
+                                              .withValues(alpha: 0.5),
+                                    width: isSelected ? 2 : 1,
                                   ),
-                                  child: isSelected
-                                      ? const Icon(
-                                          Icons.check,
-                                          size: 12,
-                                          color: Colors.white,
-                                        )
-                                      : null,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    option,
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? theme.colorScheme.primary
+                                              : theme
+                                                    .colorScheme
+                                                    .outlineVariant,
+                                          width: 2,
+                                        ),
+                                        color: isSelected
+                                            ? theme.colorScheme.primary
+                                            : Colors.transparent,
+                                      ),
+                                      child: isSelected
+                                          ? const Icon(
+                                              Icons.check,
+                                              size: 16,
+                                              color: Colors.white,
+                                            )
+                                          : null,
                                     ),
-                                  ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        option,
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                              color: isSelected
+                                                  ? theme.colorScheme.primary
+                                                  : theme.colorScheme.onSurface,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         );
@@ -326,18 +386,29 @@ class _QuizScreenState extends State<QuizScreen>
                     else
                       TextField(
                         controller: _textController,
+                        style: const TextStyle(fontSize: 18),
                         decoration: InputDecoration(
                           hintText: 'اكتب إجابتك هنا...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
                           filled: true,
                           fillColor: theme.colorScheme.surfaceContainerHighest
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.all(20),
                         ),
-                        maxLines: 3,
+                        maxLines: 4,
                         onChanged: _answerQuestion,
                       ),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -345,38 +416,49 @@ class _QuizScreenState extends State<QuizScreen>
 
             // Navigation buttons
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    offset: const Offset(0, -2),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.05),
+                    offset: const Offset(0, -5),
+                    blurRadius: 15,
                   ),
                 ],
               ),
               child: Row(
                 children: [
                   if (!isFirst)
-                    OutlinedButton.icon(
-                      onPressed: _goToPrevious,
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('السابق'),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _goToPrevious,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('السابق'),
+                      ),
                     ),
-                  const Spacer(),
-                  if (isLast)
-                    FilledButton.icon(
-                      onPressed: _allAnswered ? _submitQuiz : null,
-                      icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('إرسال'),
-                    )
-                  else
-                    FilledButton.icon(
-                      onPressed: currentAnswer != null ? _goToNext : null,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: const Text('التالي'),
+                  if (!isFirst) const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: isLast
+                          ? (_allAnswered ? _submitQuiz : null)
+                          : (currentAnswer != null ? _goToNext : null),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        backgroundColor: isLast ? Colors.green : null,
+                      ),
+                      child: Text(isLast ? 'إرسال الاختبار' : 'السؤال التالي'),
                     ),
+                  ),
                 ],
               ),
             ),

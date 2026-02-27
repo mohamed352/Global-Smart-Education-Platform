@@ -29,7 +29,7 @@ class StudentProgressCubit extends Cubit<StudentProgressState> {
   Future<void> _loadDashboardData(String userId) async {
     try {
       final stats = await _repository.getSummaryStats(userId);
-      final lessonProgress = await _repository.getProgresses();
+      final lessonProgress = await _repository.getProgresses(userId);
       final lessons = await _repository.getLessons();
 
       final overallMastery = _calculateOverallMastery(stats);

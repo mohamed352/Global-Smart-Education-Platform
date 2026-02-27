@@ -54,7 +54,7 @@ class _MainScreenState extends State<MainScreen> {
             NavigationDestination(
               icon: Icon(Icons.quiz_outlined),
               selectedIcon: Icon(Icons.quiz),
-              label: 'اختبار الدرس',
+              label: 'الاختبارات',
             ),
             NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),

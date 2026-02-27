@@ -14,7 +14,6 @@ class LessonsPage extends StatefulWidget {
 class _LessonsPageState extends State<LessonsPage> {
   final EducationRepository _repository = getIt<EducationRepository>();
   String _searchQuery = '';
-  String _selectedFilter = 'الكل'; // 'الكل', 'مستمر', 'مكتمل'
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +50,6 @@ class _LessonsPageState extends State<LessonsPage> {
                   ),
                   const SizedBox(height: 24),
                   _buildSearchField(theme),
-                  const SizedBox(height: 16),
-                  _buildFilterChips(theme),
                 ],
               ),
             ),
@@ -90,25 +87,6 @@ class _LessonsPageState extends State<LessonsPage> {
                               ),
                         )
                         .toList();
-                  }
-
-                  // Apply category filter
-                  if (_selectedFilter == 'مكتمل') {
-                    lessons = lessons.where((l) {
-                      final p = progresses.firstWhere(
-                        (p) => p.lessonId == l.id,
-                        orElse: () => _emptyProgress(l.id),
-                      );
-                      return p.progressPercent >= 100;
-                    }).toList();
-                  } else if (_selectedFilter == 'مستمر') {
-                    lessons = lessons.where((l) {
-                      final p = progresses.firstWhere(
-                        (p) => p.lessonId == l.id,
-                        orElse: () => _emptyProgress(l.id),
-                      );
-                      return p.progressPercent > 0 && p.progressPercent < 100;
-                    }).toList();
                   }
 
                   if (lessons.isEmpty) {
@@ -176,13 +154,6 @@ class _LessonsPageState extends State<LessonsPage> {
           color: theme.colorScheme.onSurface,
         ),
       ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_outlined),
-        ),
-        const SizedBox(width: 8),
-      ],
     );
   }
 
@@ -203,32 +174,6 @@ class _LessonsPageState extends State<LessonsPage> {
             vertical: 12,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChips(ThemeData theme) {
-    final filters = ['الكل', 'مستمر', 'مكتمل'];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: filters.map((filter) {
-          final isSelected = _selectedFilter == filter;
-          return Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: ChoiceChip(
-              label: Text(filter),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) setState(() => _selectedFilter = filter);
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              showCheckmark: false,
-            ),
-          );
-        }).toList(),
       ),
     );
   }

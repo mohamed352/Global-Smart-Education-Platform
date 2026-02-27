@@ -41,111 +41,159 @@ class QuizResultScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Score Circle
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: score / 100),
-                  duration: const Duration(milliseconds: 1500),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, value, child) {
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 160,
-                          height: 160,
-                          child: CircularProgressIndicator(
-                            value: value,
-                            strokeWidth: 12,
-                            backgroundColor:
-                                theme.colorScheme.surfaceContainerHighest,
-                            color: scoreColor,
-                            strokeCap: StrokeCap.round,
-                          ),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(scoreIcon, size: 36, color: scoreColor),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${(value * 100).toInt()}%',
-                              style: theme.textTheme.headlineLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: scoreColor,
-                              ),
+      backgroundColor: theme.colorScheme.surface,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: 0.05),
+              theme.colorScheme.surface,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Animated Trophy/Icon
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(seconds: 1),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Icon(scoreIcon, size: 80, color: scoreColor),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Score Circle
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: score / 100),
+                    duration: const Duration(milliseconds: 2000),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: CircularProgressIndicator(
+                              value: value,
+                              strokeWidth: 16,
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              color: scoreColor,
+                              strokeCap: StrokeCap.round,
                             ),
-                          ],
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${(value * 100).toInt()}%',
+                                style: theme.textTheme.displayMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                'الدرجة النهائية',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Message
+                  Text(
+                    message,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Details Card
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.shadow.withValues(
+                            alpha: 0.05,
+                          ),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
                         ),
                       ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-
-                // Message
-                Text(
-                  message,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-
-                // Details
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(
-                      alpha: 0.3,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildDetailRow(
-                        context,
-                        'الإجابات الصحيحة',
-                        '$correctAnswers / $totalQuestions',
-                        Icons.check_circle,
-                        Colors.green,
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      _buildDetailRow(
-                        context,
-                        'المستوى',
-                        _translateMastery(masteryLevel),
-                        Icons.stars,
-                        scoreColor,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildDetailRow(
+                          context,
+                          'الإجابات الصحيحة',
+                          '$correctAnswers / $totalQuestions',
+                          Icons.check_circle_rounded,
+                          Colors.green,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(),
+                        ),
+                        _buildDetailRow(
+                          context,
+                          'مستوى الإتقان',
+                          _translateMastery(masteryLevel),
+                          Icons.stars_rounded,
+                          scoreColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text('العودة للاختبارات'),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 32),
-
-                // Back button
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('العودة للاختبارات'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
