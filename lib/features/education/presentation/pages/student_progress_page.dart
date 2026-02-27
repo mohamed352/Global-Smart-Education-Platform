@@ -41,7 +41,6 @@ class StudentProgressPage extends StatelessWidget {
                   s.lessonProgress,
                   s.lessons,
                   s.overallMastery,
-                  s.quizAttempts,
                 ),
                 error: (e) => Center(child: Text('خطأ: ${e.message}')),
               );
@@ -58,7 +57,6 @@ class StudentProgressPage extends StatelessWidget {
     List<Progress> progressList,
     List<Lesson> lessons,
     String overallMastery,
-    List<QuizAttempt> quizAttempts,
   ) {
     final theme = Theme.of(context);
 
@@ -97,20 +95,7 @@ class StudentProgressPage extends StatelessWidget {
                 syncStatus: 'synced',
               ),
             );
-            // Find latest quiz attempt for this lesson
-            final quizAttempt = quizAttempts
-                .where((a) => a.lessonId == lesson.id)
-                .toList();
-            final latestQuiz = quizAttempt.isNotEmpty
-                ? quizAttempt.first
-                : null;
-
-            return _buildLessonProgressItem(
-              context,
-              lesson,
-              progress,
-              latestQuiz,
-            );
+            return _buildLessonProgressItem(context, lesson, progress);
           }),
         ],
       ),
@@ -131,7 +116,7 @@ class StudentProgressPage extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.primary,
-            theme.colorScheme.primary.withValues(alpha: 0.8),
+            theme.colorScheme.primary.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -139,7 +124,7 @@ class StudentProgressPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            color: theme.colorScheme.primary.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -175,16 +160,16 @@ class StudentProgressPage extends StatelessWidget {
                 const SizedBox(height: 8),
                 _buildStatItem(
                   context,
-                  Icons.quiz,
-                  'الاختبارات',
-                  '${stats['totalQuizzes'] ?? 0}',
+                  Icons.help_outline,
+                  'الأسئلة',
+                  '${stats['totalQuestions'] ?? 0}',
                 ),
                 const SizedBox(height: 8),
                 _buildStatItem(
                   context,
                   Icons.star,
-                  'متوسط درجة الاختبار',
-                  '${((stats['avgQuizScore'] as num?) ?? 0).toStringAsFixed(0)}%',
+                  'متوسط الدرجة',
+                  '${((stats['avgScore'] as num?) ?? 0).toStringAsFixed(0)}%',
                 ),
               ],
             ),
@@ -229,7 +214,6 @@ class StudentProgressPage extends StatelessWidget {
     BuildContext context,
     Lesson lesson,
     Progress progress,
-    QuizAttempt? latestQuiz,
   ) {
     final theme = Theme.of(context);
 
@@ -240,7 +224,7 @@ class StudentProgressPage extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: theme.colorScheme.outlineVariant.withOpacity(0.5),
         ),
       ),
       child: Column(
@@ -308,31 +292,6 @@ class StudentProgressPage extends StatelessWidget {
               ),
             ],
           ),
-
-          // Quiz score row
-          if (latestQuiz != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.quiz, size: 16, color: theme.colorScheme.secondary),
-                const SizedBox(width: 6),
-                Text(
-                  'نتيجة الاختبار: ${latestQuiz.score}%',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.secondary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  _translateMastery(latestQuiz.masteryLevel),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.secondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );

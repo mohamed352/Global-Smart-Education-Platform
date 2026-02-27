@@ -1,13 +1,59 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:global_smart_education_platform/core/di/injection.dart';
-import 'package:global_smart_education_platform/features/education/data/datasources/local/database.dart';
-import 'package:global_smart_education_platform/features/education/presentation/cubit/quiz_cubit.dart';
 import 'package:global_smart_education_platform/features/education/presentation/screens/quiz_result_screen.dart';
 
-class QuizScreen extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Data model — purely in-memory, no DB dependency
+// ---------------------------------------------------------------------------
+class _QuizQuestion {
+  const _QuizQuestion({
+    required this.questionText,
+    required this.options,
+    required this.correctAnswer,
+  });
+  final String questionText;
+  final List<String> options; // empty list = short answer
+  final String correctAnswer;
+  bool get isMultipleChoice => options.isNotEmpty;
+}
+
+// ---------------------------------------------------------------------------
+// Hardcoded questions — النظام الشمسي
+// ---------------------------------------------------------------------------
+const Map<String, List<_QuizQuestion>> _lessonQuestions = {};
+
+// Default questions used for all lessons
+const List<_QuizQuestion> _defaultQuestions = [
+  _QuizQuestion(
+    questionText: 'كم عدد الكواكب في المجموعة الشمسية؟',
+    options: ['7', '8', '9', '10'],
+    correctAnswer: '8',
+  ),
+  _QuizQuestion(
+    questionText: 'أي الكواكب هو الأقرب إلى الشمس؟',
+    options: ['الزهرة', 'المريخ', 'عطارد', 'الأرض'],
+    correctAnswer: 'عطارد',
+  ),
+  _QuizQuestion(
+    questionText: 'ما هو أكبر كوكب في المجموعة الشمسية؟',
+    options: ['زحل', 'أورانوس', 'نبتون', 'المشتري'],
+    correctAnswer: 'المشتري',
+  ),
+  _QuizQuestion(
+    questionText: 'أي الكواكب يُعرف بحلقاته الشهيرة؟',
+    options: ['المشتري', 'زحل', 'أورانوس', 'نبتون'],
+    correctAnswer: 'زحل',
+  ),
+  _QuizQuestion(
+    questionText: 'كم تستغرق الأرض للدوران حول الشمس دورة كاملة؟',
+    options: ['24 ساعة', '30 يوماً', '365 يوماً', '100 يوم'],
+    correctAnswer: '365 يوماً',
+  ),
+];
+
+// ---------------------------------------------------------------------------
+// Main QuizScreen — fully standalone StatefulWidget
+// ---------------------------------------------------------------------------
+class QuizScreen extends StatefulWidget {
   const QuizScreen({
     super.key,
     required this.lessonId,
@@ -18,126 +64,123 @@ class QuizScreen extends StatelessWidget {
   final String lessonTitle;
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<QuizCubit>()..loadQuiz(lessonId, lessonTitle),
-      child: const _QuizScreenBody(),
-    );
-  }
+  State<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenBody extends StatelessWidget {
-  const _QuizScreenBody();
+class _QuizScreenState extends State<QuizScreen>
+    with SingleTickerProviderStateMixin {
+  late final List<_QuizQuestion> _questions;
+  final Map<int, String> _answers = {};
+  int _currentIndex = 0;
+  final TextEditingController _textController = TextEditingController();
+  late AnimationController _progressAnimController;
+  late Animation<double> _progressAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _questions = _lessonQuestions[widget.lessonId] ?? _defaultQuestions;
+    _progressAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _progressAnimation = Tween<double>(begin: 0, end: 1 / _questions.length)
+        .animate(
+          CurvedAnimation(
+            parent: _progressAnimController,
+            curve: Curves.easeOut,
+          ),
+        );
+    _progressAnimController.forward();
+  }
+
+  @override
+  void dispose() {
+    _progressAnimController.dispose();
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _goToNext() {
+    if (_currentIndex < _questions.length - 1) {
+      final nextProgress = (_currentIndex + 2) / _questions.length;
+      _progressAnimation =
+          Tween<double>(
+            begin: (_currentIndex + 1) / _questions.length,
+            end: nextProgress,
+          ).animate(
+            CurvedAnimation(
+              parent: _progressAnimController,
+              curve: Curves.easeOut,
+            ),
+          );
+      _progressAnimController
+        ..reset()
+        ..forward();
+      setState(() {
+        _currentIndex++;
+        _textController.text = _answers[_currentIndex] ?? '';
+      });
+    }
+  }
+
+  void _goToPrevious() {
+    if (_currentIndex > 0) {
+      setState(() {
+        _currentIndex--;
+        _textController.text = _answers[_currentIndex] ?? '';
+      });
+    }
+  }
+
+  void _answerQuestion(String answer) {
+    setState(() => _answers[_currentIndex] = answer);
+  }
+
+  bool get _allAnswered => _answers.length == _questions.length;
+
+  void _submitQuiz() {
+    int correct = 0;
+    for (var i = 0; i < _questions.length; i++) {
+      if ((_answers[i] ?? '').trim() == _questions[i].correctAnswer.trim()) {
+        correct++;
+      }
+    }
+    final score = ((correct / _questions.length) * 100).round();
+    String mastery;
+    if (score >= 80) {
+      mastery = 'خبير';
+    } else if (score >= 60) {
+      mastery = 'متقدم';
+    } else if (score >= 40) {
+      mastery = 'متوسط';
+    } else {
+      mastery = 'مبتدئ';
+    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => QuizResultScreen(
+          score: score,
+          masteryLevel: mastery,
+          totalQuestions: _questions.length,
+          correctAnswers: correct,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return BlocConsumer<QuizCubit, QuizState>(
-      listener: (context, state) {
-        state.maybeWhen(
-          completed: (score, masteryLevel, totalQuestions, correctAnswers) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => QuizResultScreen(
-                  score: score,
-                  masteryLevel: masteryLevel,
-                  totalQuestions: totalQuestions,
-                  correctAnswers: correctAnswers,
-                ),
-              ),
-            );
-          },
-          orElse: () {},
-        );
-      },
-      builder: (context, state) {
-        return state.when(
-          initial: () => const SizedBox.shrink(),
-          loading: () => Scaffold(
-            appBar: AppBar(
-              title: const Text('جاري التحميل...'),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-            ),
-            body: const Center(child: CircularProgressIndicator()),
-          ),
-          active: (questions, currentIndex, answers, attemptId, lessonTitle) =>
-              _buildQuizUI(
-                context,
-                questions,
-                currentIndex,
-                answers,
-                lessonTitle,
-              ),
-          submitting: () => Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'جاري تقييم الإجابات...',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          completed: (_, __, ___, ____) => const SizedBox.shrink(),
-          error: (message) => Scaffold(
-            appBar: AppBar(
-              title: const Text('خطأ'),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-            ),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(message, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('العودة'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildQuizUI(
-    BuildContext context,
-    List<QuizQuestion> questions,
-    int currentIndex,
-    Map<int, String> answers,
-    String lessonTitle,
-  ) {
-    final theme = Theme.of(context);
-    final cubit = context.read<QuizCubit>();
-    final question = questions[currentIndex];
-    final isLast = currentIndex == questions.length - 1;
-    final isFirst = currentIndex == 0;
-    final currentAnswer = answers[currentIndex];
+    final question = _questions[_currentIndex];
+    final currentAnswer = _answers[_currentIndex];
+    final isFirst = _currentIndex == 0;
+    final isLast = _currentIndex == _questions.length - 1;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(lessonTitle),
+        title: Text(widget.lessonTitle, overflow: TextOverflow.ellipsis),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
@@ -148,11 +191,11 @@ class _QuizScreenBody extends StatelessWidget {
             // Progress bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
               child: Row(
                 children: [
                   Text(
-                    'السؤال ${currentIndex + 1} من ${questions.length}',
+                    'السؤال ${_currentIndex + 1} من ${_questions.length}',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
@@ -160,13 +203,16 @@ class _QuizScreenBody extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: (currentIndex + 1) / questions.length,
-                        minHeight: 8,
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
+                    child: AnimatedBuilder(
+                      animation: _progressAnimation,
+                      builder: (_, __) => ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: (_currentIndex + 1) / _questions.length,
+                          minHeight: 8,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                        ),
                       ),
                     ),
                   ),
@@ -181,15 +227,23 @@ class _QuizScreenBody extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Question text
+                    // Question text card
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: theme.colorScheme.outlineVariant,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
                         question.questionText,
@@ -201,16 +255,89 @@ class _QuizScreenBody extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Answer area
-                    if (question.questionType == 'multiple_choice')
-                      _buildMultipleChoice(
-                        context,
-                        question,
-                        currentAnswer,
-                        currentIndex,
-                      )
+                    // Answers
+                    if (question.isMultipleChoice)
+                      ...question.options.map((option) {
+                        final isSelected = currentAnswer == option;
+                        return GestureDetector(
+                          onTap: () => _answerQuestion(option),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.outlineVariant,
+                                width: isSelected ? 2 : 1,
+                              ),
+                              color: isSelected
+                                  ? theme.colorScheme.primaryContainer
+                                        .withOpacity(0.35)
+                                  : theme.colorScheme.surface,
+                            ),
+                            child: Row(
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.outlineVariant,
+                                      width: 2,
+                                    ),
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : Colors.transparent,
+                                  ),
+                                  child: isSelected
+                                      ? const Icon(
+                                          Icons.check,
+                                          size: 12,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    option,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      })
                     else
-                      _buildShortAnswer(context, currentAnswer, currentIndex),
+                      TextField(
+                        controller: _textController,
+                        decoration: InputDecoration(
+                          hintText: 'اكتب إجابتك هنا...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surfaceContainerHighest
+                              .withOpacity(0.3),
+                        ),
+                        maxLines: 3,
+                        onChanged: _answerQuestion,
+                      ),
                   ],
                 ),
               ),
@@ -223,7 +350,7 @@ class _QuizScreenBody extends StatelessWidget {
                 color: theme.colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                     offset: const Offset(0, -2),
                     blurRadius: 10,
                   ),
@@ -233,20 +360,20 @@ class _QuizScreenBody extends StatelessWidget {
                 children: [
                   if (!isFirst)
                     OutlinedButton.icon(
-                      onPressed: cubit.goToPrevious,
+                      onPressed: _goToPrevious,
                       icon: const Icon(Icons.arrow_back),
                       label: const Text('السابق'),
                     ),
                   const Spacer(),
                   if (isLast)
                     FilledButton.icon(
-                      onPressed: cubit.allAnswered ? cubit.submitQuiz : null,
-                      icon: const Icon(Icons.check),
+                      onPressed: _allAnswered ? _submitQuiz : null,
+                      icon: const Icon(Icons.check_circle_outline),
                       label: const Text('إرسال'),
                     )
                   else
                     FilledButton.icon(
-                      onPressed: cubit.goToNext,
+                      onPressed: currentAnswer != null ? _goToNext : null,
                       icon: const Icon(Icons.arrow_forward),
                       label: const Text('التالي'),
                     ),
@@ -256,83 +383,6 @@ class _QuizScreenBody extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildMultipleChoice(
-    BuildContext context,
-    QuizQuestion question,
-    String? currentAnswer,
-    int questionIndex,
-  ) {
-    final theme = Theme.of(context);
-    final cubit = context.read<QuizCubit>();
-    final List<dynamic> options = jsonDecode(question.options) as List<dynamic>;
-
-    return Column(
-      children: options.map<Widget>((option) {
-        final optionStr = option.toString();
-        final isSelected = currentAnswer == optionStr;
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.outlineVariant,
-              width: isSelected ? 2 : 1,
-            ),
-            color: isSelected
-                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
-                : null,
-          ),
-          child: RadioListTile<String>(
-            value: optionStr,
-            groupValue: currentAnswer,
-            onChanged: (value) {
-              if (value != null) {
-                cubit.answerQuestion(questionIndex, value);
-              }
-            },
-            title: Text(
-              optionStr,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildShortAnswer(
-    BuildContext context,
-    String? currentAnswer,
-    int questionIndex,
-  ) {
-    final theme = Theme.of(context);
-    final cubit = context.read<QuizCubit>();
-
-    return TextField(
-      controller: TextEditingController(text: currentAnswer ?? ''),
-      decoration: InputDecoration(
-        hintText: 'اكتب إجابتك هنا...',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-        fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.3,
-        ),
-      ),
-      maxLines: 3,
-      onChanged: (value) {
-        cubit.answerQuestion(questionIndex, value);
-      },
     );
   }
 }
