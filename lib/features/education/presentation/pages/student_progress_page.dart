@@ -23,11 +23,13 @@ class StudentProgressPage extends StatelessWidget {
             title: const Text(
               'تقدم الطالب',
               style: TextStyle(fontWeight: FontWeight.bold),
+
             ),
             centerTitle: true,
             elevation: 0,
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
+        scrolledUnderElevation: 2,
+            backgroundColor: theme.colorScheme.surface,
+
           ),
           body: BlocBuilder<StudentProgressCubit, StudentProgressState>(
             builder: (context, state) {
