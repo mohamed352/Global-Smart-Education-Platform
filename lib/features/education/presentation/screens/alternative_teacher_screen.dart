@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:global_smart_education_platform/core/di/injection.dart';
 import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 import 'package:global_smart_education_platform/features/education/data/datasources/local/database.dart';
 import 'package:global_smart_education_platform/features/education/data/repositories/education_repository.dart';
-import 'package:global_smart_education_platform/features/education/presentation/cubit/teacher_explanation_cubit.dart';
-import 'package:global_smart_education_platform/features/education/presentation/screens/ai_teacher_chat_screen.dart';
-import 'package:global_smart_education_platform/features/education/presentation/widgets/talking_avatar_widget.dart';
 
 class AlternativeTeacherScreen extends StatefulWidget {
   const AlternativeTeacherScreen({super.key});
@@ -58,16 +54,6 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
     }
 
     final lesson = _lessons[_currentIndex];
-
-    // Initialize AI Teacher context in background
-    if (mounted) {
-      final cubit = context.read<TeacherExplanationCubit>();
-      cubit.initializeForLesson(
-        lessonId: lesson.id,
-        lessonTitle: lesson.title,
-        lessonContent: lesson.content,
-      );
-    }
 
     // Initialize Video if available
     if (lesson.videoPath.isNotEmpty) {
@@ -398,79 +384,24 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          // Smart Assistant Floating Entry
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _openChat(context, lesson),
-              child: Container(
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const TalkingAvatarWidget(size: 38),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'أسأل المعلمة ذكية',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const Icon(
-                      Icons.chat_bubble_outline,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
+      child: SizedBox(
+        height: 56,
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: _nextLesson,
+          icon: const Icon(Icons.skip_next),
+          label: const Text(
+            'الدرس التالي',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
             ),
           ),
-          const SizedBox(width: 12),
-          // Next Lesson Button
-          SizedBox(
-            height: 56,
-            width: 56,
-            child: IconButton.filled(
-              onPressed: _nextLesson,
-              icon: const Icon(Icons.skip_next),
-              style: IconButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _openChat(BuildContext context, Lesson lesson) {
-    final cubit = context.read<TeacherExplanationCubit>();
-    cubit.initializeForLesson(
-      lessonId: lesson.id,
-      lessonTitle: lesson.title,
-      lessonContent: lesson.content,
-    );
-    Navigator.push(
-      context,
-      MaterialPageRoute<void>(
-        builder: (context) => const AiTeacherChatScreen(),
+        ),
       ),
     );
   }

@@ -48,121 +48,120 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
             _buildHeader(context),
             const Divider(height: 1),
             Expanded(
-              child:
-                  BlocConsumer<
-                    TeacherExplanationCubit,
-                    TeacherExplanationState
-                  >(
-                    listener: (context, state) {
-                      state.maybeWhen(
-                        loaded: (messages) {
-                          _scrollToBottom();
-                        },
-                        orElse: () {},
-                      );
+              child: BlocConsumer<TeacherExplanationCubit, TeacherExplanationState>(
+                listener: (context, state) {
+                  state.maybeWhen(
+                    loaded: (messages) {
+                      _scrollToBottom();
                     },
-                    builder: (context, state) {
-                      return state.when(
-                        initial: () => const Center(
-                          child: Text('اختر درساً للبدء في الدردشة!'),
+                    orElse: () {},
+                  );
+                },
+                builder: (context, state) {
+                  return state.when(
+                    initial: () => const Center(
+                      child: Text('اختر درساً للبدء في الدردشة!'),
+                    ),
+                    loading: () => const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('جاري التحضير...'),
+                        ],
+                      ),
+                    ),
+                    loaded: (messages) {
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.only(
+                          top: 20,
+                          left: 20,
+                          right: 20,
+                          bottom: 40,
                         ),
-                        loading: () => const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('جاري التحضير...'),
-                            ],
-                          ),
-                        ),
-                        loaded: (messages) {
-                          return ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.only(
-                              top: 20,
-                              left: 20,
-                              right: 20,
-                              bottom: 40,
-                            ),
-                            // Support for keyboard
-                            keyboardDismissBehavior:
-                                ScrollViewKeyboardDismissBehavior.onDrag,
-                            itemCount: messages.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == messages.length) {
-                                return BlocBuilder<
-                                  TeacherExplanationCubit,
-                                  TeacherExplanationState
-                                >(
-                                  builder: (context, state) {
-                                    if (messages.isNotEmpty &&
-                                        messages.last.isUser) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 16,
-                                        ),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'تكتب الآن',
-                                              style: theme.textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    color: theme
-                                                        .colorScheme
-                                                        .primary
-                                                        .withValues(alpha: 0.6),
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Row(
-                                              children: List.generate(
-                                                3,
-                                                (i) => _AnimatedDot(
-                                                  delay: Duration(
-                                                    milliseconds: i * 200,
-                                                  ),
-                                                ),
+                        // Support for keyboard
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        itemCount: messages.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == messages.length) {
+                            return BlocBuilder<
+                              TeacherExplanationCubit,
+                              TeacherExplanationState
+                            >(
+                              builder: (context, state) {
+                                if (messages.isNotEmpty &&
+                                    messages.last.isUser) {
+                                  return Container(
+                                    width: double.infinity,
+                                    color: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 16,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment: MainAxisAlignment
+                                          .start, // Align right natively in RTL
+                                      children: [
+                                        Row(
+                                          children: List.generate(
+                                            3,
+                                            (i) => _AnimatedDot(
+                                              delay: Duration(
+                                                milliseconds: i * 200,
                                               ),
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  },
-                                );
-                              }
-                              return _ChatBubble(
-                                message: messages[index],
-                                ttsService: _tts,
-                              );
-                            },
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'المعلمة تكتب',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                color: theme.colorScheme.primary
+                                                    .withValues(alpha: 0.6),
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            );
+                          }
+                          return _ChatBubble(
+                            message: messages[index],
+                            ttsService: _tts,
                           );
                         },
-                        error: (message) => Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.error_outline,
-                                  color: Colors.red,
-                                  size: 48,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(message, textAlign: TextAlign.center),
-                              ],
-                            ),
-                          ),
-                        ),
                       );
                     },
-                  ),
+                    error: (message) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 48,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(message, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
             _buildInputArea(context),
           ],
@@ -190,7 +189,7 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'المعلمة ذكية',
+                  'المعلمة الذكية',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
@@ -329,72 +328,42 @@ class _ChatBubble extends StatelessWidget {
     final isUser = message.isUser;
     final theme = Theme.of(context);
 
-    // Both are aligned to the START (which is RIGHT in RTL)
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    // Flat document-style row instead of floating bubbles
+    return Container(
+      width: double.infinity,
+      color: isUser
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.3)
+          : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                // Distinct colors based on sender
-                color: isUser
-                    ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
-                    : theme.colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.6,
-                      ),
-                borderRadius: BorderRadius.circular(16).copyWith(
-                  // ChatGPT style slight corner rounding tweak
-                  bottomRight: const Radius.circular(4),
-                ),
-                border: isUser
-                    ? null
-                    : Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.3,
-                        ),
-                      ),
+          Expanded(
+            child: Text(
+              message.text,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontSize: 15,
+                height: 1.7,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.text,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: isUser
-                          ? theme.colorScheme.onSurface
-                          : theme.colorScheme.onSurface,
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
+              textAlign: TextAlign.start, // Right-aligned natively in RTL
             ),
           ),
-          // Only show TTS icon for AI messages (empty string placeholder handled smoothly)
+
+          // Only show TTS icon for AI messages
           if (!isUser && message.text.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: theme.colorScheme.surfaceContainerLow,
+            const SizedBox(width: 12),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              iconSize: 22,
+              onPressed: () => ttsService.speak(message.text),
+              icon: Icon(
+                Icons.volume_up,
+                color: theme.colorScheme.primary.withValues(alpha: 0.7),
               ),
-              child: IconButton(
-                iconSize: 20,
-                onPressed: () => ttsService.speak(message.text),
-                icon: Icon(
-                  Icons.volume_up,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.7),
-                ),
-                tooltip: 'تشغيل الصوت',
-              ),
+              tooltip: 'تشغيل الصوت',
             ),
-          ] else if (isUser) ...[
-            // Padding buffer for user messages to not touch the very edge, giving distinct shape
-            const SizedBox(width: 40),
           ],
         ],
       ),
