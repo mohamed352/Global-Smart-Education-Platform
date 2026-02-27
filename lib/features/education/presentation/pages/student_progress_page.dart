@@ -20,16 +20,14 @@ class StudentProgressPage extends StatelessWidget {
         child: Scaffold(
           backgroundColor: theme.colorScheme.surface,
           appBar: AppBar(
-            title: const Text(
+            title: Text(
               'تقدم الطالب',
-              style: TextStyle(fontWeight: FontWeight.bold),
-
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             centerTitle: true,
             elevation: 0,
-        scrolledUnderElevation: 2,
+            scrolledUnderElevation: 2,
             backgroundColor: theme.colorScheme.surface,
-
           ),
           body: BlocBuilder<StudentProgressCubit, StudentProgressState>(
             builder: (context, state) {

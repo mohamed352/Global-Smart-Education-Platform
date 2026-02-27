@@ -298,29 +298,36 @@ class _ChatBubble extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              message.text,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontSize: 15,
-                height: 1.7,
-              ),
+          Text(
+            message.text,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontSize: 15,
+              height: 1.7,
             ),
           ),
           if (!isUser && message.text.isNotEmpty) ...[
-            const SizedBox(width: 12),
-            IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              iconSize: 22,
-              onPressed: () => ttsService.speak(message.text),
-              icon: Icon(
-                Icons.volume_up_rounded,
-                color: theme.colorScheme.primary.withOpacity(0.7),
+            const SizedBox(height: 8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: InkWell(
+                onTap: () => ttsService.speak(message.text),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.volume_up_rounded,
+                    size: 16,
+                    color: theme.colorScheme.primary.withOpacity(0.8),
+                  ),
+                ),
               ),
             ),
           ],
