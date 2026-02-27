@@ -99,14 +99,27 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
   Future<void> initializeGenericChat() async {
     log.i('Initializing generic AI Teacher chat', tag: LogTags.bloc);
 
-    _lessonContent =
-        'أنت معلمة ذكية عامة، مهمتك مساعدة الطالب في أي سؤال تعليمي يطرحه.';
-    _lessonTitle = 'محادثة عامة';
-    _lessonId = 'global_chat';
-
     emit(const TeacherExplanationState.loading());
 
     try {
+      // Load all lessons to provide a base knowledge for the global chat
+      final List<Lesson> allLessons = await _db.getAllLessons();
+      if (allLessons.isNotEmpty) {
+        _lessonContent = allLessons
+            .map((l) => '--- ${l.title} ---\n${l.content}')
+            .join('\n\n');
+        _lessonTitle = 'محادثة عامة';
+        log.d(
+          'Loaded knowledge from ${allLessons.length} lessons for global chat',
+        );
+      } else {
+        _lessonContent =
+            'أنت معلمة ذكية عامة، مهمتك مساعدة الطالب في أي سؤال تعليمي يطرحه.';
+        _lessonTitle = 'محادثة عامة';
+      }
+
+      _lessonId = 'global_chat';
+
       final List<QaHistoryItem> history = await _db.getQaHistoryForLesson(
         _lessonId,
       );
@@ -115,7 +128,7 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
 
       if (history.isEmpty) {
         const String greeting =
-            'مرحباً! أنا المعلمة الذكية. كيف يمكنني مساعدتك اليوم؟';
+            'مرحباً! أنا المعلمة الذكية. كيف يمكنني مساعدتك اليوم؟ أنا هنا للإجابة على أي سؤال حول الدروس المتاحة.';
         messages.add(
           ChatMessage(text: greeting, isUser: false, timestamp: DateTime.now()),
         );
