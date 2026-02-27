@@ -126,28 +126,49 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
     );
 
     try {
-      // Simulate thinking for better UX
-      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      // Small delay before starting
+      await Future<void>.delayed(const Duration(milliseconds: 500));
 
-      final String answer = _aiService.answerQuestion(
+      final String fullAnswer = _aiService.answerQuestion(
         lessonContent: effectiveContent,
         lessonTitle: _lessonTitle.isNotEmpty ? _lessonTitle : 'الدرس',
         question: question,
       );
 
+      // Simulate streaming
+      String currentAnswer = '';
+      final words = fullAnswer.split(RegExp(r'\s+'));
+
+      // Add empty message placeholder for AI
+      final int messageIndex = currentMessages.length;
       currentMessages.add(
-        ChatMessage(text: answer, isUser: false, timestamp: DateTime.now()),
+        ChatMessage(text: '', isUser: false, timestamp: DateTime.now()),
       );
-      emit(
-        TeacherExplanationState.loaded(List<ChatMessage>.from(currentMessages)),
-      );
+
+      for (int i = 0; i < words.length; i++) {
+        await Future<void>.delayed(
+          const Duration(milliseconds: 60),
+        ); // Fast typing effect
+        currentAnswer += (i == 0 ? '' : ' ') + words[i];
+
+        currentMessages[messageIndex] = ChatMessage(
+          text: currentAnswer,
+          isUser: false,
+          timestamp: DateTime.now(),
+        );
+        emit(
+          TeacherExplanationState.loaded(
+            List<ChatMessage>.from(currentMessages),
+          ),
+        );
+      }
 
       if (_lessonId.isNotEmpty) {
         await _db.insertQaItem(
           QaHistoryItemsCompanion.insert(
             lessonId: _lessonId,
             question: question,
-            answer: answer,
+            answer: fullAnswer,
             createdAt: DateTime.now(),
           ),
         );

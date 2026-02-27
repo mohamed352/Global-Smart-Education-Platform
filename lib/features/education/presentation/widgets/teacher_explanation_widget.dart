@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:global_smart_education_platform/core/di/injection.dart';
-import 'package:global_smart_education_platform/core/logger/app_logger.dart';
-import 'package:global_smart_education_platform/features/education/data/services/teacher_stt_service.dart';
 import 'package:global_smart_education_platform/features/education/data/services/teacher_tts_service.dart';
 import 'package:global_smart_education_platform/features/education/presentation/cubit/teacher_explanation_cubit.dart';
 
@@ -41,7 +39,6 @@ class _TeacherExplanationWidgetState extends State<TeacherExplanationWidget> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TeacherTtsService _tts = getIt<TeacherTtsService>();
-  final TeacherSttService _stt = getIt<TeacherSttService>();
 
   /// Track which messages have already been spoken to avoid re-speaking history
   final Set<int> _spokenMessageHashes = <int>{};
@@ -50,7 +47,6 @@ class _TeacherExplanationWidgetState extends State<TeacherExplanationWidget> {
   @override
   void dispose() {
     _tts.stop();
-    _stt.cancelListening();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -250,7 +246,6 @@ class _TeacherExplanationWidgetState extends State<TeacherExplanationWidget> {
           IconButton(
             onPressed: () {
               _tts.stop();
-              _stt.cancelListening();
               Navigator.pop(context);
             },
             icon: const Icon(Icons.close),
@@ -281,78 +276,27 @@ class _TeacherExplanationWidgetState extends State<TeacherExplanationWidget> {
       ),
       child: Row(
         children: <Widget>[
-          // Microphone button (STT)
-          ValueListenableBuilder<bool>(
-            valueListenable: _stt.isListening,
-            builder: (BuildContext context, bool listening, Widget? child) {
-              return _MicButton(
-                isListening: listening,
-                onPressed: () => _handleMicPress(),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-          // Text input with STT preview
+          // Text input
           Expanded(
-            child: ValueListenableBuilder<String>(
-              valueListenable: _stt.recognizedText,
-              builder:
-                  (BuildContext context, String partialText, Widget? child) {
-                    return ValueListenableBuilder<bool>(
-                      valueListenable: _stt.isListening,
-                      builder:
-                          (
-                            BuildContext context,
-                            bool listening,
-                            Widget? child,
-                          ) {
-                            return TextField(
-                              controller: _controller,
-                              decoration: InputDecoration(
-                                hintText: listening
-                                    ? (partialText.isNotEmpty
-                                          ? partialText
-                                          : 'جاري الاستماع...')
-                                    : 'اسأل سؤالك هنا...',
-                                hintStyle: listening
-                                    ? TextStyle(
-                                        color: theme.colorScheme.primary,
-                                      )
-                                    : null,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                  borderSide: listening
-                                      ? BorderSide(
-                                          color: theme.colorScheme.primary,
-                                        )
-                                      : BorderSide.none,
-                                ),
-                                enabledBorder: listening
-                                    ? OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(24),
-                                        borderSide: BorderSide(
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      )
-                                    : OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(24),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                filled: true,
-                                fillColor: theme
-                                    .colorScheme
-                                    .surfaceContainerHighest
-                                    .withValues(alpha: 0.5),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                              ),
-                              onSubmitted: (_) => _sendMessage(),
-                            );
-                          },
-                    );
-                  },
+            child: TextField(
+              controller: _controller,
+              textInputAction: TextInputAction.send,
+              decoration: InputDecoration(
+                hintText: 'اسأل سؤالك هنا...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+              ),
+              onSubmitted: (_) => _sendMessage(),
             ),
           ),
           const SizedBox(width: 8),
@@ -365,31 +309,10 @@ class _TeacherExplanationWidgetState extends State<TeacherExplanationWidget> {
     );
   }
 
-  void _handleMicPress() {
-    if (_stt.isListening.value) {
-      _stt.stopListening();
-    } else {
-      _tts.stop(); // Stop any ongoing speech
-      _stt.startListening(
-        onResult: (String finalText) {
-          _controller.text = finalText;
-          log.i('STT result received: $finalText');
-          // Auto-send after a short delay so user can see the text
-          Future<void>.delayed(const Duration(milliseconds: 400), () {
-            if (mounted && _controller.text.trim().isNotEmpty) {
-              _sendMessage();
-            }
-          });
-        },
-      );
-    }
-  }
-
   void _sendMessage() {
     final String text = _controller.text.trim();
     if (text.isNotEmpty) {
       _tts.stop();
-      _stt.cancelListening();
       context.read<TeacherExplanationCubit>().askQuestion(
         widget.lessonContent,
         text,
@@ -397,101 +320,6 @@ class _TeacherExplanationWidgetState extends State<TeacherExplanationWidget> {
       _controller.clear();
       FocusScope.of(context).unfocus();
     }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// Mic Button with animated states
-// ─────────────────────────────────────────────────────────────
-
-class _MicButton extends StatefulWidget {
-  const _MicButton({required this.isListening, required this.onPressed});
-
-  final bool isListening;
-  final VoidCallback onPressed;
-
-  @override
-  State<_MicButton> createState() => _MicButtonState();
-}
-
-class _MicButtonState extends State<_MicButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    if (widget.isListening) {
-      _pulseController.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant _MicButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isListening && !oldWidget.isListening) {
-      _pulseController.repeat(reverse: true);
-    } else if (!widget.isListening && oldWidget.isListening) {
-      _pulseController.stop();
-      _pulseController.reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (BuildContext context, Widget? child) {
-        final double scale = widget.isListening
-            ? 1.0 + (_pulseController.value * 0.15)
-            : 1.0;
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.isListening
-                  ? Colors.red.shade400
-                  : theme.colorScheme.secondaryContainer,
-              boxShadow: widget.isListening
-                  ? <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.red.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              iconSize: 22,
-              onPressed: widget.onPressed,
-              icon: Icon(
-                widget.isListening ? Icons.stop : Icons.mic,
-                color: widget.isListening
-                    ? Colors.white
-                    : theme.colorScheme.onSecondaryContainer,
-              ),
-              tooltip: widget.isListening ? 'إيقاف الاستماع' : 'تحدث سؤالك',
-            ),
-          ),
-        );
-      },
-    );
   }
 }
 

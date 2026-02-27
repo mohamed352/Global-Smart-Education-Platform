@@ -28,8 +28,6 @@ import '../../features/education/data/services/media_service.dart' as _i461;
 import '../../features/education/data/services/smart_teacher_service.dart'
     as _i666;
 import '../../features/education/data/services/sync_manager.dart' as _i388;
-import '../../features/education/data/services/teacher_stt_service.dart'
-    as _i683;
 import '../../features/education/data/services/teacher_tts_service.dart'
     as _i701;
 import '../../features/education/presentation/cubit/dashboard_cubit.dart'
@@ -61,7 +59,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i694.GemmaService>(() => _i694.GemmaService());
     gh.lazySingleton<_i477.LessonAiService>(() => _i477.LessonAiService());
     gh.lazySingleton<_i461.MediaService>(() => _i461.MediaService());
-    gh.lazySingleton<_i683.TeacherSttService>(() => _i683.TeacherSttService());
     gh.lazySingleton<_i701.TeacherTtsService>(() => _i701.TeacherTtsService());
     gh.lazySingleton<_i562.EducationRepository>(
       () => _i562.EducationRepository(gh<_i228.AppDatabase>()),
