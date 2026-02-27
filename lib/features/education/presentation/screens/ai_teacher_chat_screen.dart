@@ -45,8 +45,6 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
-            const Divider(height: 1),
             Expanded(
               child: BlocConsumer<TeacherExplanationCubit, TeacherExplanationState>(
                 listener: (context, state) {
@@ -76,17 +74,20 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
                       return ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.only(
-                          top: 20,
-                          left: 20,
-                          right: 20,
                           bottom: 40,
-                        ),
+                        ), // Removed horizontal/top padding for full width header
                         // Support for keyboard
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
-                        itemCount: messages.length + 1,
+                        itemCount:
+                            messages.length +
+                            2, // Header (0) + Messages (...) + Typing Indicator (last)
                         itemBuilder: (context, index) {
-                          if (index == messages.length) {
+                          if (index == 0) return _buildHeader(context);
+
+                          final messageIndex = index - 1;
+
+                          if (messageIndex == messages.length) {
                             return BlocBuilder<
                               TeacherExplanationCubit,
                               TeacherExplanationState
@@ -119,7 +120,7 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'المعلمة تكتب',
+                                          'المعلمة تكتب...',
                                           style: theme.textTheme.bodyMedium
                                               ?.copyWith(
                                                 color: theme.colorScheme.primary
@@ -136,7 +137,7 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
                             );
                           }
                           return _ChatBubble(
-                            message: messages[index],
+                            message: messages[messageIndex],
                             ttsService: _tts,
                           );
                         },
@@ -173,8 +174,8 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(20),
-      color: theme.colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 20),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.25),
       child: Row(
         children: [
           ValueListenableBuilder<bool>(
