@@ -45,6 +45,7 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            _buildHeader(context),
             Expanded(
               child: BlocConsumer<TeacherExplanationCubit, TeacherExplanationState>(
                 listener: (context, state) {
@@ -87,11 +88,9 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         itemCount:
                             messages.length +
-                            2, // Header (0) + Messages (...) + Typing Indicator (last)
+                            1, // Messages (...) + Typing Indicator (last)
                         itemBuilder: (context, index) {
-                          if (index == 0) return _buildHeader(context);
-
-                          final messageIndex = index - 1;
+                          final messageIndex = index;
 
                           if (messageIndex == messages.length) {
                             return BlocBuilder<

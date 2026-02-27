@@ -49,7 +49,10 @@ class EducationApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Offline-First Education POC',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
+        theme: ThemeData(
+          colorSchemeSeed: const Color.fromARGB(255, 148, 155, 199),
+          useMaterial3: true,
+        ),
         locale: const Locale('ar'),
         supportedLocales: const [Locale('ar'), Locale('en')],
         localizationsDelegates: const [

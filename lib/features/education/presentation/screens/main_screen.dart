@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:global_smart_education_platform/features/education/presentation/pages/lessons_page.dart';
+import 'package:global_smart_education_platform/features/education/presentation/pages/lesson_quiz_page.dart';
 import 'package:global_smart_education_platform/features/education/presentation/screens/ai_teacher_chat_screen.dart';
 import 'package:global_smart_education_platform/features/education/presentation/pages/student_progress_page.dart';
 
@@ -16,6 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const LessonsPage(),
     const AiTeacherChatScreen(),
+    const LessonQuizPage(),
     const StudentProgressPage(),
   ];
 
@@ -48,6 +50,11 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icon(Icons.psychology_alt_outlined),
               selectedIcon: Icon(Icons.psychology_alt),
               label: 'المعلم الذكي',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.quiz_outlined),
+              selectedIcon: Icon(Icons.quiz),
+              label: 'اختبار الدرس',
             ),
             NavigationDestination(
               icon: Icon(Icons.bar_chart_outlined),

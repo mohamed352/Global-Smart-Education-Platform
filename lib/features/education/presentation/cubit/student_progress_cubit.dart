@@ -19,7 +19,6 @@ class StudentProgressCubit extends Cubit<StudentProgressState> {
   void initialize(String userId) {
     emit(const StudentProgressState.loading());
 
-    // Watch for progress changes to update dashboard in real-time
     _progressSubscription = _repository.watchProgresses().listen((_) {
       _loadDashboardData(userId);
     });

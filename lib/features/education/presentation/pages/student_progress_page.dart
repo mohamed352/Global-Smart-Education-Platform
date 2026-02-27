@@ -16,8 +16,7 @@ class StudentProgressPage extends StatelessWidget {
     return AppErrorBoundary(
       child: BlocProvider(
         create: (context) =>
-            getIt<StudentProgressCubit>()
-              ..initialize('current-user-id'), // In real app, get from auth
+            getIt<StudentProgressCubit>()..initialize('current-user-id'),
         child: Scaffold(
           backgroundColor: theme.colorScheme.surface,
           appBar: AppBar(
@@ -27,7 +26,8 @@ class StudentProgressPage extends StatelessWidget {
             ),
             centerTitle: true,
             elevation: 0,
-            backgroundColor: Colors.transparent,
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
           ),
           body: BlocBuilder<StudentProgressCubit, StudentProgressState>(
             builder: (context, state) {
@@ -41,6 +41,7 @@ class StudentProgressPage extends StatelessWidget {
                   s.lessonProgress,
                   s.lessons,
                   s.overallMastery,
+                  s.quizAttempts,
                 ),
                 error: (e) => Center(child: Text('خطأ: ${e.message}')),
               );
@@ -57,10 +58,10 @@ class StudentProgressPage extends StatelessWidget {
     List<Progress> progressList,
     List<Lesson> lessons,
     String overallMastery,
+    List<QuizAttempt> quizAttempts,
   ) {
     final theme = Theme.of(context);
 
-    // Overall average progress
     final double overallProgress = progressList.isEmpty
         ? 0
         : progressList.map((p) => p.progressPercent).reduce((a, b) => a + b) /
@@ -71,7 +72,6 @@ class StudentProgressPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Summary Header
           _buildSummaryCard(context, stats, overallProgress, overallMastery),
           const SizedBox(height: 24),
 
@@ -83,7 +83,6 @@ class StudentProgressPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Lesson List
           ...lessons.map((lesson) {
             final progress = progressList.firstWhere(
               (p) => p.lessonId == lesson.id,
@@ -98,7 +97,20 @@ class StudentProgressPage extends StatelessWidget {
                 syncStatus: 'synced',
               ),
             );
-            return _buildLessonProgressItem(context, lesson, progress);
+            // Find latest quiz attempt for this lesson
+            final quizAttempt = quizAttempts
+                .where((a) => a.lessonId == lesson.id)
+                .toList();
+            final latestQuiz = quizAttempt.isNotEmpty
+                ? quizAttempt.first
+                : null;
+
+            return _buildLessonProgressItem(
+              context,
+              lesson,
+              progress,
+              latestQuiz,
+            );
           }),
         ],
       ),
@@ -163,9 +175,16 @@ class StudentProgressPage extends StatelessWidget {
                 const SizedBox(height: 8),
                 _buildStatItem(
                   context,
-                  Icons.help_outline,
-                  'الأسئلة المطروحة',
-                  '${stats['totalQuestions']}',
+                  Icons.quiz,
+                  'الاختبارات',
+                  '${stats['totalQuizzes'] ?? 0}',
+                ),
+                const SizedBox(height: 8),
+                _buildStatItem(
+                  context,
+                  Icons.star,
+                  'متوسط درجة الاختبار',
+                  '${((stats['avgQuizScore'] as num?) ?? 0).toStringAsFixed(0)}%',
                 ),
               ],
             ),
@@ -210,6 +229,7 @@ class StudentProgressPage extends StatelessWidget {
     BuildContext context,
     Lesson lesson,
     Progress progress,
+    QuizAttempt? latestQuiz,
   ) {
     final theme = Theme.of(context);
 
@@ -253,13 +273,23 @@ class StudentProgressPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: progress.progressPercent / 100,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-            minHeight: 8,
+
+          // Animated progress bar
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress.progressPercent / 100),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) {
+              return LinearProgressIndicator(
+                value: value,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                minHeight: 8,
+              );
+            },
           ),
           const SizedBox(height: 8),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -278,6 +308,31 @@ class StudentProgressPage extends StatelessWidget {
               ),
             ],
           ),
+
+          // Quiz score row
+          if (latestQuiz != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.quiz, size: 16, color: theme.colorScheme.secondary),
+                const SizedBox(width: 6),
+                Text(
+                  'نتيجة الاختبار: ${latestQuiz.score}%',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  _translateMastery(latestQuiz.masteryLevel),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
