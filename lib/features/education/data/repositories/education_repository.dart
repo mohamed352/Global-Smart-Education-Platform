@@ -206,6 +206,7 @@ class EducationRepository {
         durationMinutes: Value<int>(data['durationMinutes'] as int),
         updatedAt: Value<DateTime>(DateTime.parse(data['updatedAt'] as String)),
         syncStatus: Value<String>(SyncStatus.synced.name),
+        hasQuiz: Value<bool>(data['hasQuiz'] as bool? ?? false),
       ),
     );
   }
@@ -233,6 +234,7 @@ class EducationRepository {
         durationMinutes: const Value<int>(5),
         updatedAt: Value<DateTime>(now),
         syncStatus: Value<String>(SyncStatus.synced.name),
+        hasQuiz: const Value<bool>(true),
       ),
     );
   }

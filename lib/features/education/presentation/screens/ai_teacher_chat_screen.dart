@@ -57,9 +57,15 @@ class _AiTeacherChatScreenState extends State<AiTeacherChatScreen> {
                 },
                 builder: (context, state) {
                   return state.when(
-                    initial: () => const Center(
-                      child: Text('اختر درساً للبدء في الدردشة!'),
-                    ),
+                    initial: () {
+                      // Initialize generic chat if it hasn't been loaded yet
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        context
+                            .read<TeacherExplanationCubit>()
+                            .initializeGenericChat();
+                      });
+                      return const Center(child: CircularProgressIndicator());
+                    },
                     loading: () => const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

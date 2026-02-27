@@ -33,6 +33,7 @@ class Lessons extends Table {
   IntColumn get durationMinutes => integer()();
   DateTimeColumn get updatedAt => dateTime()();
   TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
+  BoolColumn get hasQuiz => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -87,7 +88,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -109,6 +110,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 6) {
         await m.addColumn(syncQueueItems, syncQueueItems.lastAttemptAt);
+      }
+      if (from < 7) {
+        await m.addColumn(lessons, lessons.hasQuiz);
       }
     },
   );

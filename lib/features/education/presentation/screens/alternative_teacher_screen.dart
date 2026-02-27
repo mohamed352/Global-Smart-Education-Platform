@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:global_smart_education_platform/core/di/injection.dart';
 import 'package:global_smart_education_platform/core/logger/app_logger.dart';
 import 'package:global_smart_education_platform/features/education/data/datasources/local/database.dart';
-import 'package:global_smart_education_platform/features/education/data/repositories/education_repository.dart';
 
 class AlternativeTeacherScreen extends StatefulWidget {
-  const AlternativeTeacherScreen({super.key});
+  const AlternativeTeacherScreen({super.key, required this.lesson});
+
+  final Lesson lesson;
 
   @override
   State<AlternativeTeacherScreen> createState() =>
@@ -15,32 +15,15 @@ class AlternativeTeacherScreen extends StatefulWidget {
 }
 
 class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
-  final EducationRepository _repository = getIt<EducationRepository>();
   final AudioPlayer _audioPlayer = AudioPlayer();
   VideoPlayerController? _videoController;
 
-  List<Lesson> _lessons = [];
-  int _currentIndex = 0;
-  bool _isLoading = true;
   bool _isAudioPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _loadLessons();
-  }
-
-  Future<void> _loadLessons() async {
-    final lessons = await _repository.getLessons();
-    if (mounted) {
-      setState(() {
-        _lessons = lessons;
-        _isLoading = false;
-        if (_lessons.isNotEmpty) {
-          _initializeMedia();
-        }
-      });
-    }
+    _initializeMedia();
   }
 
   Future<void> _initializeMedia() async {
@@ -53,7 +36,7 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
       _videoController = null;
     }
 
-    final lesson = _lessons[_currentIndex];
+    final lesson = widget.lesson;
 
     // Initialize Video if available
     if (lesson.videoPath.isNotEmpty) {
@@ -64,26 +47,17 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
       } else {
         _videoController = VideoPlayerController.asset(lesson.videoPath);
       }
-
       try {
         await _videoController!.initialize();
-        setState(() {});
+        if (mounted) setState(() {});
       } catch (e) {
         log.e('Error initializing video', error: e);
       }
     }
   }
 
-  void _nextLesson() {
-    if (_lessons.isEmpty) return;
-    setState(() {
-      _currentIndex = (_currentIndex + 1) % _lessons.length;
-      _initializeMedia();
-    });
-  }
-
   Future<void> _toggleAudio() async {
-    final lesson = _lessons[_currentIndex];
+    final lesson = widget.lesson;
     if (lesson.audioPath.isEmpty) return;
 
     if (_isAudioPlaying) {
@@ -111,18 +85,7 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (_lessons.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('الدروس')),
-        body: const Center(child: Text('لا توجد دروس حالياً.')),
-      );
-    }
-
-    final lesson = _lessons[_currentIndex];
+    final lesson = widget.lesson;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -177,15 +140,13 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 120), // Bottom padding for FAB
+                  const SizedBox(height: 40), // Bottom padding
                 ],
               ),
             ),
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: _buildBottomActions(context, lesson),
     );
   }
 
@@ -197,6 +158,28 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
       stretch: true,
       backgroundColor: theme.colorScheme.primary,
       flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsetsDirectional.only(
+          start: 48,
+          end: 48,
+          bottom: 16,
+        ),
+        centerTitle: true,
+        title: Text(
+          lesson.title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            shadows: [
+              const Shadow(
+                color: Colors.black26,
+                offset: Offset(0, 2),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         stretchModes: const [
           StretchMode.zoomBackground,
           StretchMode.blurBackground,
@@ -240,28 +223,14 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'الدرس ${_currentIndex + 1} من ${_lessons.length}',
+                        'درس',
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      lesson.title,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          const Shadow(
-                            color: Colors.black26,
-                            offset: Offset(0, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -380,31 +349,7 @@ class _AlternativeTeacherScreenState extends State<AlternativeTeacherScreen> {
     );
   }
 
-  Widget _buildBottomActions(BuildContext context, Lesson lesson) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        height: 56,
-        width: double.infinity,
-        child: FilledButton.icon(
-          onPressed: _nextLesson,
-          icon: const Icon(Icons.skip_next),
-          label: const Text(
-            'الدرس التالي',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          style: FilledButton.styleFrom(
-            backgroundColor: theme.colorScheme.secondary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Removed _buildBottomActions
 }
 
 class _VideoOverlay extends StatelessWidget {

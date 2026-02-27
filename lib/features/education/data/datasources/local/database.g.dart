@@ -464,6 +464,21 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
     requiredDuringInsert: false,
     defaultValue: const Constant('synced'),
   );
+  static const VerificationMeta _hasQuizMeta = const VerificationMeta(
+    'hasQuiz',
+  );
+  @override
+  late final GeneratedColumn<bool> hasQuiz = GeneratedColumn<bool>(
+    'has_quiz',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("has_quiz" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -475,6 +490,7 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
     durationMinutes,
     updatedAt,
     syncStatus,
+    hasQuiz,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -555,6 +571,12 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
         syncStatus.isAcceptableOrUnknown(data['sync_status']!, _syncStatusMeta),
       );
     }
+    if (data.containsKey('has_quiz')) {
+      context.handle(
+        _hasQuizMeta,
+        hasQuiz.isAcceptableOrUnknown(data['has_quiz']!, _hasQuizMeta),
+      );
+    }
     return context;
   }
 
@@ -600,6 +622,10 @@ class $LessonsTable extends Lessons with TableInfo<$LessonsTable, Lesson> {
         DriftSqlType.string,
         data['${effectivePrefix}sync_status'],
       )!,
+      hasQuiz: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_quiz'],
+      )!,
     );
   }
 
@@ -619,6 +645,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
   final int durationMinutes;
   final DateTime updatedAt;
   final String syncStatus;
+  final bool hasQuiz;
   const Lesson({
     required this.id,
     required this.title,
@@ -629,6 +656,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     required this.durationMinutes,
     required this.updatedAt,
     required this.syncStatus,
+    required this.hasQuiz,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -642,6 +670,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     map['duration_minutes'] = Variable<int>(durationMinutes);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['sync_status'] = Variable<String>(syncStatus);
+    map['has_quiz'] = Variable<bool>(hasQuiz);
     return map;
   }
 
@@ -656,6 +685,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       durationMinutes: Value(durationMinutes),
       updatedAt: Value(updatedAt),
       syncStatus: Value(syncStatus),
+      hasQuiz: Value(hasQuiz),
     );
   }
 
@@ -674,6 +704,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       durationMinutes: serializer.fromJson<int>(json['durationMinutes']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
+      hasQuiz: serializer.fromJson<bool>(json['hasQuiz']),
     );
   }
   @override
@@ -689,6 +720,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       'durationMinutes': serializer.toJson<int>(durationMinutes),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'syncStatus': serializer.toJson<String>(syncStatus),
+      'hasQuiz': serializer.toJson<bool>(hasQuiz),
     };
   }
 
@@ -702,6 +734,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     int? durationMinutes,
     DateTime? updatedAt,
     String? syncStatus,
+    bool? hasQuiz,
   }) => Lesson(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -712,6 +745,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     durationMinutes: durationMinutes ?? this.durationMinutes,
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
+    hasQuiz: hasQuiz ?? this.hasQuiz,
   );
   Lesson copyWithCompanion(LessonsCompanion data) {
     return Lesson(
@@ -730,6 +764,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
       syncStatus: data.syncStatus.present
           ? data.syncStatus.value
           : this.syncStatus,
+      hasQuiz: data.hasQuiz.present ? data.hasQuiz.value : this.hasQuiz,
     );
   }
 
@@ -744,7 +779,8 @@ class Lesson extends DataClass implements Insertable<Lesson> {
           ..write('videoPath: $videoPath, ')
           ..write('durationMinutes: $durationMinutes, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('syncStatus: $syncStatus')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('hasQuiz: $hasQuiz')
           ..write(')'))
         .toString();
   }
@@ -760,6 +796,7 @@ class Lesson extends DataClass implements Insertable<Lesson> {
     durationMinutes,
     updatedAt,
     syncStatus,
+    hasQuiz,
   );
   @override
   bool operator ==(Object other) =>
@@ -773,7 +810,8 @@ class Lesson extends DataClass implements Insertable<Lesson> {
           other.videoPath == this.videoPath &&
           other.durationMinutes == this.durationMinutes &&
           other.updatedAt == this.updatedAt &&
-          other.syncStatus == this.syncStatus);
+          other.syncStatus == this.syncStatus &&
+          other.hasQuiz == this.hasQuiz);
 }
 
 class LessonsCompanion extends UpdateCompanion<Lesson> {
@@ -786,6 +824,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
   final Value<int> durationMinutes;
   final Value<DateTime> updatedAt;
   final Value<String> syncStatus;
+  final Value<bool> hasQuiz;
   final Value<int> rowid;
   const LessonsCompanion({
     this.id = const Value.absent(),
@@ -797,6 +836,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     this.durationMinutes = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
+    this.hasQuiz = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LessonsCompanion.insert({
@@ -809,6 +849,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     required int durationMinutes,
     required DateTime updatedAt,
     this.syncStatus = const Value.absent(),
+    this.hasQuiz = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -825,6 +866,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     Expression<int>? durationMinutes,
     Expression<DateTime>? updatedAt,
     Expression<String>? syncStatus,
+    Expression<bool>? hasQuiz,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -837,6 +879,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
       if (durationMinutes != null) 'duration_minutes': durationMinutes,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
+      if (hasQuiz != null) 'has_quiz': hasQuiz,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -851,6 +894,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     Value<int>? durationMinutes,
     Value<DateTime>? updatedAt,
     Value<String>? syncStatus,
+    Value<bool>? hasQuiz,
     Value<int>? rowid,
   }) {
     return LessonsCompanion(
@@ -863,6 +907,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
       durationMinutes: durationMinutes ?? this.durationMinutes,
       updatedAt: updatedAt ?? this.updatedAt,
       syncStatus: syncStatus ?? this.syncStatus,
+      hasQuiz: hasQuiz ?? this.hasQuiz,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -897,6 +942,9 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
     if (syncStatus.present) {
       map['sync_status'] = Variable<String>(syncStatus.value);
     }
+    if (hasQuiz.present) {
+      map['has_quiz'] = Variable<bool>(hasQuiz.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -915,6 +963,7 @@ class LessonsCompanion extends UpdateCompanion<Lesson> {
           ..write('durationMinutes: $durationMinutes, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('syncStatus: $syncStatus, ')
+          ..write('hasQuiz: $hasQuiz, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2633,6 +2682,7 @@ typedef $$LessonsTableCreateCompanionBuilder =
       required int durationMinutes,
       required DateTime updatedAt,
       Value<String> syncStatus,
+      Value<bool> hasQuiz,
       Value<int> rowid,
     });
 typedef $$LessonsTableUpdateCompanionBuilder =
@@ -2646,6 +2696,7 @@ typedef $$LessonsTableUpdateCompanionBuilder =
       Value<int> durationMinutes,
       Value<DateTime> updatedAt,
       Value<String> syncStatus,
+      Value<bool> hasQuiz,
       Value<int> rowid,
     });
 
@@ -2723,6 +2774,11 @@ class $$LessonsTableFilterComposer
 
   ColumnFilters<String> get syncStatus => $composableBuilder(
     column: $table.syncStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hasQuiz => $composableBuilder(
+    column: $table.hasQuiz,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2805,6 +2861,11 @@ class $$LessonsTableOrderingComposer
     column: $table.syncStatus,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get hasQuiz => $composableBuilder(
+    column: $table.hasQuiz,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$LessonsTableAnnotationComposer
@@ -2848,6 +2909,9 @@ class $$LessonsTableAnnotationComposer
     column: $table.syncStatus,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get hasQuiz =>
+      $composableBuilder(column: $table.hasQuiz, builder: (column) => column);
 
   Expression<T> progressesRefs<T extends Object>(
     Expression<T> Function($$ProgressesTableAnnotationComposer a) f,
@@ -2912,6 +2976,7 @@ class $$LessonsTableTableManager
                 Value<int> durationMinutes = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
+                Value<bool> hasQuiz = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LessonsCompanion(
                 id: id,
@@ -2923,6 +2988,7 @@ class $$LessonsTableTableManager
                 durationMinutes: durationMinutes,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
+                hasQuiz: hasQuiz,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2936,6 +3002,7 @@ class $$LessonsTableTableManager
                 required int durationMinutes,
                 required DateTime updatedAt,
                 Value<String> syncStatus = const Value.absent(),
+                Value<bool> hasQuiz = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => LessonsCompanion.insert(
                 id: id,
@@ -2947,6 +3014,7 @@ class $$LessonsTableTableManager
                 durationMinutes: durationMinutes,
                 updatedAt: updatedAt,
                 syncStatus: syncStatus,
+                hasQuiz: hasQuiz,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

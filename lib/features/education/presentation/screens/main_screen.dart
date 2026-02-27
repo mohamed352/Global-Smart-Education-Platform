@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:global_smart_education_platform/features/education/presentation/screens/alternative_teacher_screen.dart';
-
+import 'package:global_smart_education_platform/features/education/presentation/pages/lessons_page.dart';
 import 'package:global_smart_education_platform/features/education/presentation/screens/ai_teacher_chat_screen.dart';
 import 'package:global_smart_education_platform/features/education/presentation/pages/student_progress_page.dart';
 
@@ -15,7 +14,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const AlternativeTeacherScreen(),
+    const LessonsPage(),
     const AiTeacherChatScreen(),
     const StudentProgressPage(),
   ];

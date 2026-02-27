@@ -95,6 +95,74 @@ class TeacherExplanationCubit extends Cubit<TeacherExplanationState> {
     }
   }
 
+  /// Initialize a generic chat when no lesson is selected
+  Future<void> initializeGenericChat() async {
+    log.i('Initializing generic AI Teacher chat', tag: LogTags.bloc);
+
+    _lessonContent =
+        'أنت معلمة ذكية عامة، مهمتك مساعدة الطالب في أي سؤال تعليمي يطرحه.';
+    _lessonTitle = 'محادثة عامة';
+    _lessonId = 'global_chat';
+
+    emit(const TeacherExplanationState.loading());
+
+    try {
+      final List<QaHistoryItem> history = await _db.getQaHistoryForLesson(
+        _lessonId,
+      );
+
+      final List<ChatMessage> messages = <ChatMessage>[];
+
+      if (history.isEmpty) {
+        const String greeting =
+            'مرحباً! أنا المعلمة الذكية. كيف يمكنني مساعدتك اليوم؟';
+        messages.add(
+          ChatMessage(text: greeting, isUser: false, timestamp: DateTime.now()),
+        );
+
+        await _db.insertQaItem(
+          QaHistoryItemsCompanion.insert(
+            lessonId: _lessonId,
+            question: '',
+            answer: greeting,
+            isGreeting: const Value(true),
+            createdAt: DateTime.now(),
+          ),
+        );
+      } else {
+        for (final QaHistoryItem item in history) {
+          if (!item.isGreeting && item.question.isNotEmpty) {
+            messages.add(
+              ChatMessage(
+                text: item.question,
+                isUser: true,
+                timestamp: item.createdAt,
+              ),
+            );
+          }
+          messages.add(
+            ChatMessage(
+              text: item.answer,
+              isUser: false,
+              timestamp: item.createdAt,
+            ),
+          );
+        }
+      }
+
+      emit(TeacherExplanationState.loaded(messages));
+    } catch (e) {
+      log.e('Error initializing generic chat', error: e);
+      const String greeting =
+          'مرحباً! أنا المعلمة الذكية. كيف يمكنني مساعدتك اليوم؟';
+      emit(
+        TeacherExplanationState.loaded(<ChatMessage>[
+          ChatMessage(text: greeting, isUser: false, timestamp: DateTime.now()),
+        ]),
+      );
+    }
+  }
+
   /// Ask a question — generates answer 100% offline from lesson content
   Future<void> askQuestion(String content, String question) async {
     final currentState = state;
