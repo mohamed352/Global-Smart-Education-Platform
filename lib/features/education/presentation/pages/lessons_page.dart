@@ -13,6 +13,8 @@ class LessonsPage extends StatefulWidget {
 
 class _LessonsPageState extends State<LessonsPage> {
   final EducationRepository _repository = getIt<EducationRepository>();
+  String _searchQuery = '';
+  String _selectedFilter = 'الكل'; // 'الكل', 'مستمر', 'مكتمل'
 
   @override
   Widget build(BuildContext context) {
@@ -20,80 +22,240 @@ class _LessonsPageState extends State<LessonsPage> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text(
-          'الدروس المتاحة',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        elevation: 0,
-      ),
-      body: StreamBuilder<List<Lesson>>(
-        stream: _repository.watchLessons(),
-        builder: (context, lessonSnapshot) {
-          if (lessonSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final lessons = lessonSnapshot.data ?? [];
-          if (lessons.isEmpty) {
-            return Center(
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(theme),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 24,
+                left: 16,
+                right: 16,
+                bottom: 8,
+              ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.school_outlined,
-                    size: 80,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    'لا توجد دروس متاحة حالياً',
-                    style: theme.textTheme.titleMedium?.copyWith(
+                    'مرحباً بك،',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  Text(
+                    'جاهز لنتعلم شيئاً جديداً اليوم؟',
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  _buildSearchField(theme),
+                  const SizedBox(height: 16),
+                  _buildFilterChips(theme),
                 ],
               ),
-            );
-          }
+            ),
+          ),
+          StreamBuilder<List<Lesson>>(
+            stream: _repository.watchLessons(),
+            builder: (context, lessonSnapshot) {
+              if (lessonSnapshot.connectionState == ConnectionState.waiting) {
+                return const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
 
-          return StreamBuilder<List<Progress>>(
-            stream: _repository.watchProgresses(),
-            builder: (context, progressSnapshot) {
-              final progresses = progressSnapshot.data ?? [];
+              var lessons = lessonSnapshot.data ?? [];
 
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                itemCount: lessons.length,
-                itemBuilder: (context, index) {
-                  final lesson = lessons[index];
-                  // Find progress for this lesson, returning empty if not found
-                  final progress = progresses.firstWhere(
-                    (p) => p.lessonId == lesson.id,
-                    orElse: () => Progress(
-                      id: '',
-                      userId: '',
-                      lessonId: lesson.id,
-                      progressPercent: 0,
-                      score: 0,
-                      masteryLevel: 'beginner',
-                      updatedAt: DateTime.now(),
-                      syncStatus: 'synced',
+              if (lessons.isEmpty) {
+                return SliverFillRemaining(child: _buildEmptyState(theme));
+              }
+
+              return StreamBuilder<List<Progress>>(
+                stream: _repository.watchProgresses(),
+                builder: (context, progressSnapshot) {
+                  final progresses = progressSnapshot.data ?? [];
+
+                  // Apply search filter
+                  if (_searchQuery.isNotEmpty) {
+                    lessons = lessons
+                        .where(
+                          (l) =>
+                              l.title.toLowerCase().contains(
+                                _searchQuery.toLowerCase(),
+                              ) ||
+                              l.description.toLowerCase().contains(
+                                _searchQuery.toLowerCase(),
+                              ),
+                        )
+                        .toList();
+                  }
+
+                  // Apply category filter
+                  if (_selectedFilter == 'مكتمل') {
+                    lessons = lessons.where((l) {
+                      final p = progresses.firstWhere(
+                        (p) => p.lessonId == l.id,
+                        orElse: () => _emptyProgress(l.id),
+                      );
+                      return p.progressPercent >= 100;
+                    }).toList();
+                  } else if (_selectedFilter == 'مستمر') {
+                    lessons = lessons.where((l) {
+                      final p = progresses.firstWhere(
+                        (p) => p.lessonId == l.id,
+                        orElse: () => _emptyProgress(l.id),
+                      );
+                      return p.progressPercent > 0 && p.progressPercent < 100;
+                    }).toList();
+                  }
+
+                  if (lessons.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Text(
+                          'لم يتم العثور على دروس تطابق بحثك',
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final lesson = lessons[index];
+                        final progress = progresses.firstWhere(
+                          (p) => p.lessonId == lesson.id,
+                          orElse: () => _emptyProgress(lesson.id),
+                        );
+                        return _buildLessonCard(context, lesson, progress);
+                      }, childCount: lessons.length),
                     ),
                   );
-                  return _buildLessonCard(context, lesson, progress);
                 },
               );
             },
-          );
-        },
+          ),
+        ],
       ),
+    );
+  }
+
+  Progress _emptyProgress(String lessonId) {
+    return Progress(
+      id: '',
+      userId: '',
+      lessonId: lessonId,
+      progressPercent: 0,
+      score: 0,
+      masteryLevel: 'beginner',
+      updatedAt: DateTime.now(),
+      syncStatus: 'synced',
+    );
+  }
+
+  Widget _buildSliverAppBar(ThemeData theme) {
+    return SliverAppBar(
+      expandedHeight: 0,
+      floating: true,
+      pinned: true,
+      elevation: 0,
+      centerTitle: true,
+      backgroundColor: theme.colorScheme.surface,
+      surfaceTintColor: theme.colorScheme.surface,
+      title: Text(
+        'الدروس المتاحة',
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.notifications_outlined),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildSearchField(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: TextField(
+        onChanged: (value) => setState(() => _searchQuery = value),
+        decoration: InputDecoration(
+          hintText: 'ابحث عن درس...',
+          prefixIcon: const Icon(Icons.search),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChips(ThemeData theme) {
+    final filters = ['الكل', 'مستمر', 'مكتمل'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filters.map((filter) {
+          final isSelected = _selectedFilter == filter;
+          return Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: ChoiceChip(
+              label: Text(filter),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) setState(() => _selectedFilter = filter);
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              showCheckmark: false,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.school_outlined,
+          size: 100,
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'لا توجد دروس متاحة حالياً',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'تحقق من اتصالك بالإنترنت للمزامنة',
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
     );
   }
 
@@ -104,24 +266,24 @@ class _LessonsPageState extends State<LessonsPage> {
   ) {
     final theme = Theme.of(context);
     final isCompleted = progress.progressPercent >= 100;
+    final inProgress = progress.progressPercent > 0 && !isCompleted;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
         ),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -133,26 +295,33 @@ class _LessonsPageState extends State<LessonsPage> {
               ),
             );
           },
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Icon / Image placeholder
                     Container(
-                      height: 44,
-                      width: 44,
+                      height: 56,
+                      width: 56,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(10),
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.primary.withValues(alpha: 0.7),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        Icons.play_lesson_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 20,
+                      child: const Icon(
+                        Icons.import_contacts_rounded,
+                        color: Colors.white,
+                        size: 28,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -162,59 +331,146 @@ class _LessonsPageState extends State<LessonsPage> {
                         children: [
                           Text(
                             lesson.title,
-                            style: theme.textTheme.titleLarge?.copyWith(
+                            style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
+                              fontSize: 18,
                             ),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            '${lesson.durationMinutes} دقيقة',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 14,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${lesson.durationMinutes} دقيقة',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              if (isCompleted)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'مكتمل',
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              else if (inProgress)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'قيد التقدم',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.primary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  lesson.description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'التقدم',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '${progress.progressPercent}%',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: progress.progressPercent / 100,
+                              minHeight: 10,
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isCompleted
+                                    ? Colors.green
+                                    : theme.colorScheme.primary,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    if (isCompleted)
-                      Icon(
-                        Icons.check_circle,
-                        color: theme.colorScheme.primary,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  lesson.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-
-                // Progress Indicator
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: progress.progressPercent / 100,
-                          minHeight: 8,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
+                    const SizedBox(width: 16),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
                         ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: theme.colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ],
                 ),
-
-                // Start Quiz Button removed
               ],
             ),
           ),
